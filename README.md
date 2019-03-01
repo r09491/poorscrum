@@ -58,5 +58,7 @@ Save as ~/.poorscrum/poorscrum_emptybacklog.pptx
 (8) Test import
 ./poorscrum_import.py --empty /tmp/starter.pptx /tmp/starter/*.story
 
-(8) Test burndown
+(9) Test burndown
 ./poorscrum_import.py --empty /tmp/starter.pptx /tmp/starter/*.story
+
+This README is work in progress!
