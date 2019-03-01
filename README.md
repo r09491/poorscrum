@@ -1,12 +1,12 @@
 # poorscrum
 Poor man's Scrum commandline tools
 
-Once there was a Product Owner writing story cards to communicate with the his
-team and his customer. He decided to use Powerpoint as card editor. Immitating
+Once upon a time there was a Product Owner writing story cards to communicate with
+his team and his customer. He decided to use Powerpoint as card editor. Immitating
 a hardcopy found on the web he put each story in a well-designed layout on a
 slide. One after the other he added to the presentation and generated an
 impressive Product Backlog with a lot of valuable information also for other
-purposes. The only problem was how to extract.
+purposes. The only problem was to use it if not for reading.
 
 The Product Owner was certified. He was taught that a Scrum Master is
 responsible for resolving any impedients. The good willing man accepted. He
