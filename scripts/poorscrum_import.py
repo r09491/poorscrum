@@ -157,7 +157,7 @@ def main():
         try:
             slide_status = Status(story.get("status", "text"))
         except:
-            logger.warn("Skipped the slide #{:d}. Wrong Status Item!"
+            logger.warn("Skipped the file prefixed #{:d}. Wrong Status Item!"
                         .format(num))
             return 8
 

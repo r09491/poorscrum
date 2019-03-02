@@ -14,51 +14,64 @@ also liked Python and after some googling he found the library python-pttx to
 write a few following commandline tools:
 
 *poorscrum_learn.py
+-------------------
 Associates the fields defined in the pickup file with the placeholder indices
 of the last(!) layout of the slide master of a powerpoint presentation. The
 layout shall define the content of the story. The file is required by the
 other tools.
 
-*poorscrum_export.py         
+*poorscrum_export.py
+--------------------
 Exports the slides from PPTX file into regular ASCII text files in config
 format
 
 *poorscrum_import.py
+--------------------
 Imports the ASCII text files in config format into a PPTX file
   
 *poorscrum_burndown.py
+----------------------
 Generates a burndown chart from the size fields in the layout if present
 
 
 
 Installation
+------------
 
-(1) Install virtualenv 
-virtualenv -p python2 vpoorscrum
+(1) Clone poorscrum
+$ git clone https://github.com/r09491/poorscrum.git
 
-(2) Activate the virtualenv
+(2) Enter the cloned directory
+$ cd poorscrum
 
-(3) pip install requirements.txt
+(3) Install the python3 virtualenv with python3 in the clone
+$ virtualenv -p python3 .vpoorscrum
 
+  You may want to add .vpoorscrum to .gitignore
 
-(4) Clone the initialisation directory
+(4) Activate the python3 virtualenv
+$ . .vpoorscrum/bin/activate
+
+(5) Install the required python libraries
+$ pip install -r requirements.txt
+
+(6) Clone the poorscrum initialisation directory into the home directory
 Execute cp -r home/.poorscrum ~/
 
-(5) Update ~/.poorscrum/poorscrum_pickup.ini 
-Execute  ./scripts/poorscrum_learn.py ~/.poorscrum/poorscrum_pickupbacklog.pptx 1
+(7) Update ~/.poorscrum/poorscrum_pickup.ini 
+$ ./scripts/poorscrum_learn.py ~/.poorscrum/poorscrum_pickupbacklog.pptx 1
 
-(6) Update the empty presentation ~/.poorscrum/poorscrum_emptybacklog.pptx 
-Open ~/.poorscrum/poorscrum_pickupbacklog.pptx with Powerpoint
-Remove the slide so that only the slide master is left
-Save as ~/.poorscrum/poorscrum_emptybacklog.pptx
 
-(7) Test export
- ./poorscrum_export.py ../starters/starter.pptx /tmp/starter
+(8) Test export
+$ ./scripts/poorscrum_export.py ../tests/test.pptx /tmp/test
 
-(8) Test import
-./poorscrum_import.py --empty /tmp/starter.pptx /tmp/starter/*.story
+(9) Test import
+$ ./scripts/poorscrum_import.py --empty /tmp/test.pptx /tmp/test/*.story
 
-(9) Test burndown
-./poorscrum_import.py --empty /tmp/starter.pptx /tmp/starter/*.story
+(10) Test burndown
+$ ./poorscrum_import.py --empty /tmp/test.pptx /tmp/test/*.story
 
-This README is work in progress!
+
+Caveats
+-------
+The tools do not work with pptx files from libre office!

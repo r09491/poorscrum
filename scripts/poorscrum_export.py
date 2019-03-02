@@ -155,7 +155,7 @@ def main():
         logger.error("Presentation is not found.")
         return 8
     
-    logger.info("The Backlog '{}' has '{:d}' slides."
+    logger.info("The Backlog '{}' has '{:d}' slide(s)."
                 .format(os.path.basename(args.from_pptx), len(prs.slides)))
 
 
@@ -280,7 +280,7 @@ def main():
     if not args.dry:
         logger.info("Saved #{:d} stories.".format(selected_stories))
     else:
-        logger.info("Would have saved #{:d} stories.".format(selected_stories))
+        logger.info("Would have saved {:d} stories.".format(selected_stories))
         
     return 0
 
