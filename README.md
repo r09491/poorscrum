@@ -1,88 +1,98 @@
-poorscrum
-=========
-Poor man's Scrum commandline tools
+# Poor Man's Scrum Commandline Tools
 
-Once upon a time there was a Product Owner writing story cards to
-communicate with his team and his customer. He decided to use
-Powerpoint as card editor. Immitating a hardcopy found on the web he
-put each story in a well-designed layout on a slide. One after the
-other he added to the presentation and generated an impressive Product
-Backlog with a lot of valuable information also for other
-purposes. The only problem was to use it if not for reading.
+Once upon a time there was a Scrum Product Owner who wanted to use
+story cards to communicate even better with his team and his
+customer. He decided to use Powerpoint as card editor for impressive
+presentations (with lady decorators) and easy printout. Immitating a
+template found on the web he put each story in a well-designed layout
+on a slide. He added one after the other and generated an impressive
+Product Backlog with a lot of valuable information also for other
+purposes. The only problem was to access and extract it.
 
-The Product Owner was certified. He was taught that a Scrum Master is
-responsible for resolving any impedients. The good willing man
-accepted. He also liked Python and after some googling he found the
-library python-pttx to write a few following commandline tools:
+The Product Owner was **certified**. He was taught that a Scrum Master
+is responsible for resolving any impedients. The good willing man
+accepted since he liked scripting. He also liked Python and after some
+googling he found the library _python-pttx_ to write a few commandline
+tools:
 
-poorscrum_learn.py
--------------------
-Associates the fields defined in the pickup file with the placeholder
+#### poorscrum_learn.py
+
+_Associates the fields defined in the pickup file with the placeholder
 indices of the last(!) layout of the slide master of a powerpoint
 presentation. The layout shall define the content of the story. The
-file is required by the other tools.
+pickup file ('poorscrum_pickup.ini' in the '.poorscrum' home
+directory) is required by the other tools._
 
-poorscrum_export.py
---------------------
-Exports the slides from PPTX file into regular ASCII text files in
-config format
+#### poorscrum_export.py
 
-poorscrum_import.py
---------------------
-Imports the ASCII text files in config format into a PPTX file
+_Exports the slides from PPTX file into regular ASCII text files in
+config format_
+
+#### poorscrum_import.py
+
+_Imports the ASCII text files in config format into a PPTX file_
   
-poorscrum_burndown.py
-----------------------
-Generates a burndown chart from the size fields in the layout if
-present
+#### poorscrum_burndown.py
+
+_Generates a burndown chart from the size fields in the layout if
+present. Requires the sprint defintion file 'poorscrum_sprint.ini' in
+the '.poorscrum' home directory._
 
 
-Installation
-------------
+## Installation
 
-(1) Clone poorscrum
-::
-$ git clone https://github.com/r09491/poorscrum.git
+1. Clone poorscrum
 
-(2) Enter the cloned directory
-::
-$ cd poorscrum
+   $ git clone https://github.com/r09491/poorscrum.git
 
-(3) Install the python3 virtualenv with python3 in the clone
-::
-$ virtualenv -p python3 .vpoorscrum
+2. Enter the cloned directory
 
-  You may want to add .vpoorscrum to .gitignore
+   $ cd poorscrum
 
-(4) Activate the python3 virtualenv
-::
-$ . .vpoorscrum/bin/activate
+3. Install the python3 virtualenv with python3 in the clone
 
-(5) Install the required python libraries
-::
-$ pip install -r requirements.txt
+   $ virtualenv -p python3 .vpoorscrum
 
-(6) Clone the poorscrum initialisation directory into the home directory
-::
-Execute cp -r home/.poorscrum ~/
+   You may want to add .vpoorscrum to .gitignore
 
-(7) Update ~/.poorscrum/poorscrum_pickup.ini
-::
-$ ./scripts/poorscrum_learn.py ~/.poorscrum/poorscrum_pickupbacklog.pptx 1
+4. Activate the python3 virtualenv
 
-(8) Test export
-::
-$ ./scripts/poorscrum_export.py ../tests/test.pptx /tmp/test
+   $ . .vpoorscrum/bin/activate
 
-(9) Test import
-::
-$ ./scripts/poorscrum_import.py --empty /tmp/test.pptx /tmp/test/*.story
+5. Install the required python libraries
 
-(10) Test burndown
-::
-$ ./poorscrum_import.py --empty /tmp/test.pptx /tmp/test/*.story
+   $ pip install -r requirements.txt
+
+## Usage
+
+1. Clone the poorscrum initialisation directory into the home directory
+
+   $ cp -r home/.poorscrum ~/
+
+2. Update ~/.poorscrum/poorscrum_pickup.ini
+
+   $ ./scripts/poorscrum_learn.py ~/.poorscrum/poorscrum_pickupbacklog.pptx 1
+
+3. Test export
+
+   $ ./scripts/poorscrum_export.py ../tests/test.pptx /tmp/test
+
+4. Test import
+
+   $ ./scripts/poorscrum_import.py --empty /tmp/test.pptx /tmp/test/*.story
+
+5. Test burndown
+
+    $ ./poorscrum_burndown.py --empty /tmp/test.pptx /tmp/test/*.story
 
 
-Caveats
--------
-The tools do not work with pptx files from libre office!
+## Caveats
+
+The Scrum Masters had access to a shared server
+
+    from linux: to run his tools
+    
+    from windows: to work with Powerpoint
+
+
+The tools do not work with pptx files from _libre office_!
