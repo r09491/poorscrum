@@ -75,7 +75,7 @@ the '.poorscrum' home directory._
 
 3. Test export
 
-   $ ./scripts/poorscrum_export.py ../tests/hello_pptx.pptx tests/test
+   $ ./scripts/poorscrum_export.py tests/hello_pptx.pptx tests/test
 
 4. Test import
 
@@ -116,10 +116,12 @@ The Scrum Masters had access to a shared server
 
 The tools do not work with pptx files from _libre office_!
 
-The tools tested under Linux only!
+The tools is tested under Linux only!
 
 
 ## TODO
 
 * Add a tool for adding burnup charts
+* Add additional layout for scrum
 * Run under windows
+

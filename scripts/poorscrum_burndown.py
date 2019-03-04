@@ -16,8 +16,6 @@ from poorscrum import SPRINT_FILE, BURNDOWN_SAVE_NAME, read_fields, __version__
 
 import configparser
 
-import numpy as np
-
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
@@ -137,18 +135,18 @@ def plot_burndown(points_left, first_unedited, save_name = BURNDOWN_SAVE_NAME):
     plt.bar(0, points_left[0], color="green", label="start", width=0.5)
 
     """ Draw the actual work done """
-    plt.bar(np.arange(1,first_unedited), \
+    plt.bar(range(1,first_unedited), \
             points_left[1:first_unedited], color="red", label="actual", width=0.5)
 
     """ Draw the work still to be done """
-    plt.bar(np.arange(first_unedited,len(points_left)), \
+    plt.bar(range(first_unedited,len(points_left)), \
             points_left[first_unedited:len(points_left)], color="grey", label="estimate", width=0.5)
 
     plt.ylim(0, points_left[0])
-    plt.yticks(np.arange(0, points_left[0]+1, int(points_left[0] / 5)))
+    plt.yticks(range(0, points_left[0]+1, max(1, int(points_left[0] / 5))))
 
     plt.xlim(-1, sprint_days)
-    plt.xticks(np.arange(0, sprint_days+1, int(sprint_days / 5)))
+    plt.xticks(range(0, sprint_days+1, max(5, int(sprint_days / 5))))
 
     plt.grid()
     plt.legend()
