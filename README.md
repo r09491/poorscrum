@@ -75,15 +75,15 @@ the '.poorscrum' home directory._
 
 3. Test export
 
-   $ ./scripts/poorscrum_export.py ../tests/test.pptx /tmp/test
+   $ ./scripts/poorscrum_export.py ../tests/hello_pptx.pptx tests/test
 
 4. Test import
 
-   $ ./scripts/poorscrum_import.py --empty /tmp/test.pptx /tmp/test/*.story
+   $ ./scripts/poorscrum_import.py --empty tests/test.pptx tests/test/*.story
 
 5. Test burndown
 
-    $ ./poorscrum_burndown.py --empty /tmp/test.pptx /tmp/test/*.story
+    $ ./poorscrum_burndown.py tests/test.pptx
 
 
 ## About [python-pptx](github.com/scanny/python-pptx)
