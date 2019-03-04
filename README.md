@@ -86,20 +86,6 @@ the '.poorscrum' home directory._
     $ ./poorscrum_burndown.py --empty /tmp/test.pptx /tmp/test/*.story
 
 
-## Caveats
-
-The Scrum Masters had access to a shared server
-
-    from linux: to run his tools
-    
-    from windows: to work with Powerpoint
-
-
-The tools do not work with pptx files from _libre office_!
-
-The tools tested under Linux only!
-
-
 ## About [python-pptx](github.com/scanny/python-pptx)
 
 The library [python-pptx](github.com/scanny/python-pptx) supports to modify an
@@ -117,6 +103,20 @@ The tools use the python standard library
 the slides in ASCII text file in order to edit them conveniently. There are
 some simple conventions to be followed in order to comment or to make a
 paragraph. There is plenty of information on the web.
+
+
+## Caveats
+
+The Scrum Masters had access to a shared server
+
+    from linux: to run his tools
+    
+    from windows: to work with Powerpoint
+
+
+The tools do not work with pptx files from _libre office_!
+
+The tools tested under Linux only!
 
 
 ## TODO
