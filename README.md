@@ -9,11 +9,11 @@ on a slide. He added one after the other and generated an impressive
 Product Backlog with a lot of valuable information also for other
 purposes. The only problem was to access and extract it.
 
-The Product Owner was **certified**. He was taught that a Scrum Master
-is responsible for resolving any impedients. The good willing man
-accepted since he liked scripting. He also liked Python and after some
-googling he found the library _python-pttx_ to write a few commandline
-tools:
+The Product Owner was **certified**. He was taught that a Scrum Master is
+responsible for resolving any impedients. The good willing man accepted since
+he liked scripting. He also liked Python and after some googling he found the
+library [python-pptx](github.com/scanny/python-pptx) to write a few
+commandline tools:
 
 #### poorscrum_learn.py
 
@@ -96,3 +96,30 @@ The Scrum Masters had access to a shared server
 
 
 The tools do not work with pptx files from _libre office_!
+
+The tools tested under Linux only!
+
+
+## About [python-pptx](github.com/scanny/python-pptx)
+
+The library [python-pptx](github.com/scanny/python-pptx) supports to modify an
+existing slide, to append a new slide to an existing presentation. Especially
+there is no obvious support to delete a slide, to move a slide, to insert a
+new slide before or after another slide, to sort the slides as per their
+content which prevents from changing the slide sequence "en situ". Export and
+import is needed for this purpose.
+
+
+## About Config Files
+
+The tools use the python standard library
+[configparser](https://docs.python.org/3/library/configparser.html) to store
+the slides in ASCII text file in order to edit them conveniently. There are
+some simple conventions to be followed in order to comment or to make a
+paragraph. There is plenty of information on the web.
+
+
+## TODO
+
+* Add a tool for adding burnup charts
+* Run under windows
