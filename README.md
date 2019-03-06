@@ -38,6 +38,11 @@ _Generates a burndown chart from the size fields in the layout if
 present. Requires the sprint defintion file 'poorscrum_sprint.ini' in
 the '.poorscrum' home directory._
 
+#### poorscrum_modify.py
+
+_Modifies a single field in a text story after it has been updated in the PPTX
+file._
+
 
 ## Installation
 
@@ -117,6 +122,8 @@ The Scrum Masters had access to a shared server
 The tools do not work with pptx files from _libre office_!
 
 The tools is tested under Linux only!
+
+The Scrum Master is not a tester, the tools are not tested.
 
 
 ## TODO
