@@ -77,18 +77,18 @@ def read_fields(pickup_file = PICKUP_FILE):
     pickup.read(pickup_file)
 
     try:
-        return dict(pickup.items("FIELDS"))
+        return dict(pickup.items("STORY"))
     except configparser.NoSectionError:
         return None # Illegal file content
 
 
 def write_fields(pickup, pickup_file = PICKUP_FILE):
-    """ write the index mappings of the story items
+    """ Write the index mappings of the story items
     """
     config = configparser.ConfigParser()
-    config.add_section("FIELDS")
+    config.add_section("STORY")
     for k, v  in pickup.items():
-        config.set("FIELDS", k, v)
+        config.set("STORY", k, v)
     with open(pickup_file, "w") as config_file:
         config.write(config_file)
 
