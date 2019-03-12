@@ -8,7 +8,7 @@ __doc__ = """ """
 from pptx import Presentation
 from pptx.exc import PackageNotFoundError
 
-from poorscrum import Status, read_fields, __version__
+from poorscrum import Status, read_fields, story_points, __version__ 
 
 import configparser
 
@@ -122,20 +122,35 @@ def export_story_to_config(from_slide, with_fields):
 
 
 def append_tasks_to_config(from_slide, to_story):
-    for shape in from_slide.placeholders:
+    
+    """ Find the container of the table.
+    Abort if there is more than one!  """
+    for shape in from_slide.shapes:
         if not shape.has_table:
             return None
-        table = shape.table
 
-        to_story.add_section("tasks")
-        for num, row in enumerate(table.rows):
+    table = shape.table
+    lastrow = len(table.rows)-1
+
+    """ Add each task in the slide in tasks section """
+    wstart, wleft, wdone = 0, 0, 0
+    to_story.add_section("tasks")
+    for num, row in enumerate(table.rows):
+        if num < lastrow:
             tasks = [extract_text(cell.text_frame) for cell in row.cells]
             to_story.set("tasks","task{:d}".format(num+1),",".join(tasks))
-
+            wstart += int(tasks[1]) 
+            wleft += int(tasks[2])
+            wdone += int(tasks[3])
+    total = ",".join(["Total",
+                      str(story_points(wstart)),
+                      str(story_points(wleft)),
+                      str(story_points(wdone)), "Points"])
+    to_story.set("tasks", "total", total)
     return to_story
 
 
-def write_config(num, story, args):
+def write_config(num, selected, story, args):
     """ Should have been done by argparse !"""
     first_status = Status(args.status_first)
     last_status = Status(args.status_last)
@@ -191,10 +206,10 @@ def write_config(num, story, args):
         """ Provide a narrative file name """
         title = story.get("title", "text").strip()
         title = title if len(title) < args.with_title else title[:args.with_title] 
-        story_filename = "{:04d}_{}.story".format(10*(num), title.strip())
+        story_filename = "{:04d}_{}.story".format(10*(selected), title.strip())
     else:
         """ provide a pure numeric file name """
-        story_filename = "{:04d}.story".format(10*(num))
+        story_filename = "{:04d}.story".format(10*(selected))
 
     story_filename = story_filename.lower().replace(' ', '_').replace('/', '_')
 
@@ -223,7 +238,7 @@ def write_config(num, story, args):
     if not args.dry:
         with open(story_pathname, 'w') as storyfile:
             story.write(storyfile)
-        logger.info("Saved the story of slide #{:d} as '{}'."
+        logger.info("Saved the story slide #{:d} as '{}'."
                     .format(num, story_pathname))
     else:
         logger.info("Would save the story of slide #{:d} as '{}'."
@@ -302,12 +317,16 @@ def main():
 
             """ Always save it """
             if not args.dry:
-                write_config(selected_stories, story, args)
+                write_config(num, selected_stories, story, args)
 
+            if tasks:
+                logger.info("Task slide #{:d} is appended to file.".format(num+1))
+                story = None
+                continue
             
         story = export_story_to_config(slide, fields_map)
         if story is None:
-            logger.info("Skipped the story slide #{:d} with foreign format.".format(num+1))
+            logger.info("Skipped the slide #{:d} as story slide.".format(num+1))
             continue
 
         selected_stories += 1
@@ -316,9 +335,9 @@ def main():
         if story:
             tasks = append_tasks_to_config(slide, story)
             if tasks is None:
-                logger.warn("Tasks slide is missing after story slide #{:d}.".format(num))
+                logger.warn("Tasks slide is missing after story slide #{:d}.".format(num+1))
 
-            write_config(selected_stories, story, args)
+            write_config(num, selected_stories, story, args)
             
         logger.info("Saved '{:d}' stories with tasks.".format(selected_stories))
     else:

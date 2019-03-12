@@ -7,3 +7,4 @@ __license__ = "BSD"
 from poorscrum.poorscrum_config import *
 from poorscrum.poorscrum_story import *
 from poorscrum.poorscrum_tasks import *
+from poorscrum.poorscrum_tools import *

@@ -6,7 +6,7 @@ __doc__ = """ """
 
 from pptx import Presentation
 
-from poorscrum import Poorscrum_Tasks, Status, read_fields, EMPTY_PPTX, __version__
+from poorscrum import Poorscrum_Tasks, Status, read_fields, EMPTY_PPTX, story_points, __version__
 
 import configparser
 
@@ -111,13 +111,31 @@ def import_tasks(from_tasks, to_prs):
     """!!! Our tasks layout is always the one before the story layout !!!"""
     tasks_slide_layout = to_prs.slide_layouts[-2]
     to_slide = to_prs.slides.add_slide(tasks_slide_layout)
-
     to_table = Poorscrum_Tasks(to_slide, to_prs.slide_height, to_prs.slide_width)
+    lastrow = len(to_table.table.rows)-1
+    
     try:
-        for row, task in enumerate(from_tasks.items("tasks")):
-            to_table.put_as_row(row, task[1].split(','))
+        tasks = from_tasks.items("tasks")
     except:
-        to_slide = None
+        return None
+
+    wstart, wleft, wdone = 0, 0, 0
+    for row, task in enumerate(tasks):
+        if row < lastrow:
+            # Calculate all rows
+            data = task[1].split(',')
+            wstart += int(data[1]) 
+            wleft += int(data[2])
+            wdone += int(data[3])
+            # Output leading tasks only
+            to_table.put_as_row(row, data)
+
+    # Fibonacci!
+    total = ["Total",
+             str(story_points(wstart)),
+             str(story_points(wleft)),
+             str(story_points(wdone)), "Points"]
+    to_table.put_as_row(lastrow, total)
         
     return to_slide
 

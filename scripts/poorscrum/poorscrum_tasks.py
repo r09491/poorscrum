@@ -11,29 +11,28 @@ class Poorscrum_Tasks:
 
         height = int(slide_height - 2*top)
         width = int(slide_width/2 - 2*left)
-        width_task = int(0.80 * width)
-        width_work = int(0.05 * width)
-        width_devs = int(0.15 * width)
-        task_table = slide.shapes.add_table(rows, cols, left, top, width, height)
 
-        """ No special treatment of the first and last rows and coloumns """
+        #  There is only one placeholder currently
+        idx = slide.shapes[0].placeholder_format.idx
+        placeholder = slide.placeholders[idx]
+        task_frame = placeholder.insert_table(rows,cols)
+        table = task_frame.table
         
-        table = task_table.table
         table.first_row = False
         table.first_col = False
-        table.last_row = False
+        table.last_row = True
         table.last_col = False
 
         """ Set the width of the columns """
-        
-        table.columns[0].width = int(0.55*width)
-        table.columns[1].width = int(0.1*width)
-        table.columns[2].width = int(0.1*width)
-        table.columns[3].width = int(0.1*width)
-        table.columns[4].width = int(0.15*width)
 
-        default_text = ["<task{:d}>", "#e", "#l", "#d", "<dev>"]
-        
+        percents = [0.55, 0.1, 0.1, 0.1, 0.15]
+        for col, percent in zip(table.columns, percents):
+            col.width = int(percent*width)
+
+        for row in table.rows:
+            row.height = int(height/rows)
+
+        default_text = ["<task{:d}>", "0", "0", "0", "<dev>"]        
         for rkey, row in enumerate(table.rows):
             
             for ckey, (cell, text) in enumerate(zip(row.cells, default_text)):
@@ -54,7 +53,7 @@ class Poorscrum_Tasks:
                     p.alignment = PP_ALIGN.CENTER
 
                 r = p.add_run()
-                r.text = default_text[ckey].format(rkey)
+                r.text = default_text[ckey].format(rkey+1)
                 r.font.size = Pt(10)
                 r.font.name = 'Consolas'
 
