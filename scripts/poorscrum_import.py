@@ -6,7 +6,7 @@ __doc__ = """ """
 
 from pptx import Presentation
 
-from poorscrum import Status, read_fields, EMPTY_PPTX, __version__
+from poorscrum import Poorscrum_Tasks, Status, read_fields, EMPTY_PPTX, __version__
 
 import configparser
 
@@ -52,7 +52,32 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def import_slide_from_story(from_story, to_prs, with_pickup):
+def import_text(to_frame, text):
+    is_link = False
+    p = to_frame.paragraphs[0] # Already there!
+    r = p.add_run()
+    for c in text:
+        if c == "\n":
+            p = to_frame.add_paragraph()
+            r = p.add_run()
+        elif c == '<':
+            is_link = True
+            r = p.add_run()
+        elif c == '>' and is_link:
+            is_link = False
+        elif c == '/' and is_link:
+            pass
+        else:
+            if is_link:
+                if r.hyperlink.address is None:
+                    r.hyperlink.address = c
+                else:
+                    r.hyperlink.address += c
+            else:
+                r.text += c
+
+
+def import_story(from_story, to_prs, with_pickup):
     """ Imports the story items for a story slide
     """
 
@@ -74,30 +99,26 @@ def import_slide_from_story(from_story, to_prs, with_pickup):
         except configparser.NoSectionError:
             return None
 
-        is_link = False
-        f = shape.text_frame
-        p = f.paragraphs[0] # Already there!
-        r = p.add_run()
-        for c in item_text:
-            if c == "\n":
-                p = f.add_paragraph()
-                r = p.add_run()
-            elif c == '<':
-                is_link = True
-                r = p.add_run()
-            elif c == '>' and is_link:
-                is_link = False
-            elif c == '/' and is_link:
-                pass
-            else:
-                if is_link:
-                    if r.hyperlink.address is None:
-                        r.hyperlink.address = c
-                    else:
-                        r.hyperlink.address += c
-                else:
-                    r.text += c
+        import_text(shape.text_frame, item_text)
 
+    return to_slide
+
+
+def import_tasks(from_tasks, to_prs):
+    """ Imports the tasks items for a tasks slide
+    """
+
+    """!!! Our tasks layout is always the one before the story layout !!!"""
+    tasks_slide_layout = to_prs.slide_layouts[-2]
+    to_slide = to_prs.slides.add_slide(tasks_slide_layout)
+
+    to_table = Poorscrum_Tasks(to_slide, to_prs.slide_height, to_prs.slide_width)
+    try:
+        for row, task in enumerate(from_tasks.items("tasks")):
+            to_table.put_as_row(row, task[1].split(','))
+    except:
+        to_slide = None
+        
     return to_slide
 
 
@@ -176,10 +197,14 @@ def main():
 
         """ Append the story to the presentation """
         
-        slide = import_slide_from_story(story, to_prs, fields_map)
+        slide = import_story(story, to_prs, fields_map)
         if slide is None:
             logger.error("Wrong text story format: '{}'".format(story_file))
             return 9
+
+        tasks = import_tasks(story, to_prs)
+        if tasks is None:
+            logger.warn("There are no tasks in: '{}'".format(story_file))
 
         logger.info("Import ok: '{}'".format(story_file))
 

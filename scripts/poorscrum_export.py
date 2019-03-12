@@ -70,15 +70,36 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def export_story_as_config(from_slide, with_fields):
+def extract_text(from_frame):
+    text = ""
+    paras = from_frame.paragraphs
+    for p in paras:
+        for r in p.runs:
+            link = r.hyperlink
+            has_link = link is not None and (link.address is not None)
+            if has_link:
+                text += '<'
+                for c in link.address:
+                    text += c if ord(c) < 128 else ''
+                text += '>'
+            for c in r.text:
+                text += c if ord(c) < 128 else ''
+            if has_link:
+                text += '</>'
+        if( len(paras) > 1):
+            text += "\n"
+    return text
+
+
+def export_story_to_config(from_slide, with_fields):
     """ Returns the story items for a story slide in the config format
 
-    Each slide contains placeholder with a text frame which in turn contains
-    paragraphs with text. Only ASCII characters are allowed in the story text
-    files to overcome the different encodings on computers.
+    Each story slide contains placeholders with a text frame which in turn
+    contains paragraphs with text. Only ASCII characters are allowed in the
+    story text files to overcome the different encodings on computers.
 
-    Each placeholder is associated with a story item. They become a 'section' in
-    the config file with the 'key' text associated with the parsed text.
+    Each placeholder is associated with a story item. They become a 'section'
+    in the config file with the 'key' text associated with the parsed text.
     """
     
     story = configparser.RawConfigParser()
@@ -88,32 +109,127 @@ def export_story_as_config(from_slide, with_fields):
             shape = from_slide.placeholders[int(index)]
         except KeyError:
             return None
-        
+
         if not shape.has_text_frame:
             continue
 
-        text = ""
-        paras = shape.text_frame.paragraphs
-        for p in paras:
-            for r in p.runs:
-                link = r.hyperlink
-                has_link = link is not None and (link.address is not None)
-                if has_link:
-                    text += '<'
-                    for c in link.address:
-                        text += c if ord(c) < 128 else ''
-                    text += '>'
-                for c in r.text:
-                    text += c if ord(c) < 128 else ''
-                if has_link:
-                    text += '</>'
-            if( len(paras) > 1):
-                text += "\n"
+        text = extract_text(shape.text_frame)
                     
         story.add_section(item)
         story.set(item, "text", text.strip())
 
     return story
+
+
+def append_tasks_to_config(from_slide, to_story):
+    for shape in from_slide.placeholders:
+        if not shape.has_table:
+            return None
+        table = shape.table
+
+        to_story.add_section("tasks")
+        for num, row in enumerate(table.rows):
+            tasks = [extract_text(cell.text_frame) for cell in row.cells]
+            to_story.set("tasks","task{:d}".format(num+1),",".join(tasks))
+
+    return to_story
+
+
+def write_config(num, story, args):
+    """ Should have been done by argparse !"""
+    first_status = Status(args.status_first)
+    last_status = Status(args.status_last)
+
+    try:
+        slide_status = Status(story.get("status", "text"))
+    except:
+        """ Any illegal status is considered as out """
+        slide_status = last_status
+
+    if  slide_status < first_status:
+        logger.info("Skipped the slide #{:d}. Status '{}' is below '{}'."
+                    .format(num, slide_status, first_status))
+        return None
+        
+    if  slide_status > last_status:
+        logger.info("Skipped the slide #{:d}. Status '{}' is after '{}'."
+                    .format(num, slide_status, last_status))
+        return None
+
+    """ Store in a state dependent directory structure (KANBAN) """
+
+    to_slide_dir = args.to_slide_dir
+    if args.kanban:
+        to_slide_dir = os.path.join(to_slide_dir, slide_status.value.lower())
+
+        if (slide_status == Status("ANALYSING")) or (slide_status == Status("SPRINTING")):
+            """ A Dev owns a story only during  ANALYSING and SPRINTING. In the
+            other states a story belongs to the teams
+            """
+                
+            """ Add the first developper if available """
+            slide_dev = story.get("devs", "text").split()
+            try:
+                to_slide_dir = os.path.join(to_slide_dir, slide_dev[0])
+            except:
+                logger.error("The slide #{:d} has no Dev. Aborted!".format(num))
+                return None
+
+    if not os.path.exists(to_slide_dir):
+        try:
+            os.makedirs(to_slide_dir)
+        except:
+            logger.error("Failed to create the kanban directory '{}'.".
+                         format(to_slide_dir))
+        logger.info("Created the kanban directory '{}'.".
+                    format(to_slide_dir))
+
+
+    """ Generate a very special file name from title to guess content"""
+        
+    if args.with_title > 0:
+        """ Provide a narrative file name """
+        title = story.get("title", "text").strip()
+        title = title if len(title) < args.with_title else title[:args.with_title] 
+        story_filename = "{:04d}_{}.story".format(10*(num), title.strip())
+    else:
+        """ provide a pure numeric file name """
+        story_filename = "{:04d}.story".format(10*(num))
+
+    story_filename = story_filename.lower().replace(' ', '_').replace('/', '_')
+
+    if args.with_ids:
+        try:
+            id = int(story.get("id", "text"))
+        except:
+            """ Any illegal id becomes no id """
+            id = 0
+        story_filename = "{:04d}_{}".format(id, story_filename)
+
+    if args.with_values:
+        try:
+            value = int(story.get("value", "text"))
+        except:
+            """ Any illegal value becomes no value """
+            value = 0
+        priority = 0 if value < 0 or value > 100 else 100-value
+        story_filename = "{:03d}_{}".format(priority, story_filename)
+
+
+    """ Save the presentation """
+        
+    story_pathname = os.path.join(to_slide_dir, story_filename) 
+
+    if not args.dry:
+        with open(story_pathname, 'w') as storyfile:
+            story.write(storyfile)
+        logger.info("Saved the story of slide #{:d} as '{}'."
+                    .format(num, story_pathname))
+    else:
+        logger.info("Would save the story of slide #{:d} as '{}'."
+                    .format(num, story_pathname))
+            
+    return story_pathname
 
 
 def main():
@@ -172,113 +288,39 @@ def main():
     else:
         logger.info("Would create the directory '{}' for the story files"
                     .format(args.to_slide_dir))
-        
+
+    story = None    
     selected_stories = 0
     for num, slide in enumerate(prs.slides):
-        story = export_story_as_config(slide, fields_map)
-        if story is None:
-            logger.info("Skipped the slide #{:d} with foreign format.".format(num+1))
-            continue
+
+        if story:
+            """ Try to add tasks. No problem if there is none"""
+            tasks = append_tasks_to_config(slide, story)
+            if tasks is None:
+                logger.warn("Tasks slide is missing after story slide #{:d}.".format(num))
 
 
-        """ Skip stories not in desired state """
+            """ Always save it """
+            if not args.dry:
+                write_config(selected_stories, story, args)
 
-        """ Should have been done by argparse !"""
-        first_status = Status(args.status_first)
-        last_status = Status(args.status_last)
-
-        try:
-            slide_status = Status(story.get("status", "text"))
-        except:
-            """ Any illegal status is considered as out """
-            slide_status = last_status
-
-        if  slide_status < first_status:
-            logger.info("Skipped the slide #{:d}. Status '{}' is below '{}'."
-                        .format(num+1, slide_status, first_status))
-            continue
-        if  slide_status > last_status:
-            logger.info("Skipped the slide #{:d}. Status '{}' is after '{}'."
-                        .format(num+1, slide_status, last_status))
-            continue
-
-        """ Store in a state dependent directory structure (KANBAN) """
-
-        to_slide_dir = args.to_slide_dir
-        if args.kanban:
-            to_slide_dir = os.path.join(to_slide_dir, slide_status.value.lower())
-
-            if (slide_status == Status("ANALYSING")) or (slide_status == Status("SPRINTING")):
-                """ A Dev owns a story only during  analysing and sprinting. In the
-                other states a story belongs to the teams
-                """
-                
-                """ Add the first developper if available """
-                slide_dev = story.get("devs", "text").split()
-                try:
-                    to_slide_dir = os.path.join(to_slide_dir, slide_dev[0])
-                except:
-                    logger.error("The slide #{:d} has no Dev. Aborted!".format(num+1))
-                    return 10
-
-            if not os.path.exists(to_slide_dir):
-                try:
-                    os.makedirs(to_slide_dir)
-                except:
-                    logger.error("Failed to create the kanban directory '{}'.".
-                                 format(to_slide_dir))
-                logger.info("Created the kanban directory '{}'.".
-                            format(to_slide_dir))
-
-
-        """ Generate a very special file name from title to guess content"""
-        
-        if args.with_title > 0:
-            """ Provide a narrative file name """
-            title = story.get("title", "text").strip()
-            title = title if len(title) < args.with_title else title[:args.with_title] 
-            story_filename = "{:04d}_{}.story".format(10*(num+1), title.strip())
-        else:
-            """ provide a pure numeric file name """
-            story_filename = "{:04d}.story".format(10*(num+1))
-
-        story_filename = story_filename.lower().replace(' ', '_').replace('/', '_')
-
-        if args.with_ids:
-            try:
-                id = int(story.get("id", "text"))
-            except:
-                """ Any illegal id becomes no id """
-                id = 0
-            story_filename = "{:04d}_{}".format(id, story_filename)
-
-        if args.with_values:
-            try:
-                value = int(story.get("value", "text"))
-            except:
-                """ Any illegal value becomes no value """
-                value = 0
-            priority = 0 if value < 0 or value > 100 else 100-value
-            story_filename = "{:03d}_{}".format(priority, story_filename)
-
-
-        """ Save the presentation """
-        
-        story_pathname = os.path.join(to_slide_dir, story_filename) 
-
-        if not args.dry:
-            with open(story_pathname, 'w') as storyfile:
-                story.write(storyfile)
-            logger.info("Saved the story of slide #{:d} as '{}'."
-                        .format(num+1, story_pathname))
-        else:
-            logger.info("Would save the story of slide #{:d} as '{}'."
-                        .format(num+1, story_pathname))
             
+        story = export_story_to_config(slide, fields_map)
+        if story is None:
+            logger.info("Skipped the story slide #{:d} with foreign format.".format(num+1))
+            continue
+
         selected_stories += 1
 
     if not args.dry:
-        logger.info("Saved #{:d} stories.".format(selected_stories))
+        if story:
+            tasks = append_tasks_to_config(slide, story)
+            if tasks is None:
+                logger.warn("Tasks slide is missing after story slide #{:d}.".format(num))
+
+            write_config(selected_stories, story, args)
+            
+        logger.info("Saved '{:d}' stories with tasks.".format(selected_stories))
     else:
         logger.info("Would have saved {:d} stories.".format(selected_stories))
         
