@@ -228,7 +228,7 @@ def main():
             return 8
 
         if len(slide_points_left) == 0:
-            logger.info("Slide '{:d}': Skipped since not a sory file!".format(num+1))
+            logger.info("Slide '{:d}': Skipped since not a story file!".format(num+1))
             continue
 
         """ Determine the index of the last value entered """
