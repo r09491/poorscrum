@@ -66,6 +66,9 @@ def parse_arguments():
     ngroup.add_argument("--with_ids", required=False,
                         action="store_true", 
                         help="Prefix the story file name with the ID field")
+    ngroup.add_argument("--skip_counts", required=False,
+                        action="store_true", 
+                        help="Skip the count prefix for the file name")
 
     return parser.parse_args()
 
@@ -150,7 +153,7 @@ def append_tasks_to_config(from_slide, to_story):
     return to_story
 
 
-def write_config(num, selected, story, args):
+def write_config(num, count, story, args):
     """ Should have been done by argparse !"""
     first_status = Status(args.status_first)
     last_status = Status(args.status_last)
@@ -202,16 +205,21 @@ def write_config(num, selected, story, args):
 
     """ Generate a very special file name from title to guess content"""
         
-    if args.with_title > 0:
+    if args.with_title == 0:
+        """ Provide a pure numeric file name """
+        story_filename = "{:04d}".format(10*count)
+    else:
         """ Provide a narrative file name """
         title = story.get("title", "text").strip()
-        title = title if len(title) < args.with_title else title[:args.with_title] 
-        story_filename = "{:04d}_{}.story".format(10*(selected), title.strip())
-    else:
-        """ provide a pure numeric file name """
-        story_filename = "{:04d}.story".format(10*(selected))
+        title = title if len(title) < args.with_title else title[:args.with_title]
+        story_filename = title.strip().lower().replace(' ', '_').replace('/', '_')
 
-    story_filename = story_filename.lower().replace(' ', '_').replace('/', '_')
+        """ Prefix by the count if not explicitly skipped """
+        if not args.skip_counts:
+            story_filename = "{:04d}_{}".format(10*count, story_filename)
+
+    """ Append the extension """
+    story_filename = "{}.story".format(story_filename)
 
     if args.with_ids:
         try:
@@ -267,7 +275,7 @@ def main():
         logger.error("Must provide target directory without wild cards!")
         return 4
 
-    if (args.with_values or args.with_ids) and args.kanban:
+    if args.with_values and args.kanban:
         logger.error("Must provide legal parameter combinations!")
         return 5
         
@@ -308,6 +316,13 @@ def main():
     selected_stories = 0
     for num, slide in enumerate(prs.slides):
 
+        """
+        A story consists of the a slide pair with the specification fields and a
+        slide with the implementation tasks.
+
+        First the specification is exported to the config file. If ok then the
+        tasks are appended. So for the two slides there is one config file.
+        """
         if story:
             """ Try to add tasks. No problem if there is none"""
             tasks = append_tasks_to_config(slide, story)
