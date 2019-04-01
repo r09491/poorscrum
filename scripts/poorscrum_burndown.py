@@ -121,7 +121,7 @@ def extract_work(from_slide, with_pickup):
     return [int(c) for c in text.split()]
 
 
-def plot_burndown(points_left, first_unedited, save_name = BURNDOWN_SAVE_NAME):
+def plot_burndown(points_left, last_edited, save_name = BURNDOWN_SAVE_NAME):
     sprint_days = len(points_left)
 
     rcParams['figure.figsize'] = (8, 6)
@@ -135,12 +135,16 @@ def plot_burndown(points_left, first_unedited, save_name = BURNDOWN_SAVE_NAME):
     plt.bar(0, points_left[0], color="green", label="start", width=0.5)
 
     """ Draw the actual work done """
-    plt.bar(range(1,first_unedited), \
-            points_left[1:first_unedited], color="red", label="actual", width=0.5)
+    if (last_edited > 0) and (last_edited <= len(points_left)):
+        plt.bar(range(1,last_edited), \
+                points_left[1:last_edited], \
+                color="red", label="actual", width=0.5)
 
     """ Draw the work still to be done """
-    plt.bar(range(first_unedited,len(points_left)), \
-            points_left[first_unedited:len(points_left)], color="grey", label="estimate", width=0.5)
+    if (last_edited >= 0) and (last_edited < len(points_left)):
+        plt.bar(range(last_edited+1,len(points_left)), \
+                points_left[last_edited+1:len(points_left)], \
+                color="grey", label="estimate", width=0.5)
 
     plt.ylim(0, points_left[0])
     plt.yticks(range(0, points_left[0]+1, max(1, int(points_left[0] / 5))))
@@ -271,7 +275,7 @@ def main():
         logger.info("Dry run finished: ok.")
         return 0
 
-    save_name = plot_burndown(total_points_left, last_edited+1)
+    save_name = plot_burndown(total_points_left, last_edited)
     logger.info("Saved the burddown chart to '{}'".format(save_name))
 
     add_burndown_to_pptx(prs, save_name)
