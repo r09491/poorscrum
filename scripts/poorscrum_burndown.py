@@ -135,15 +135,15 @@ def plot_burndown(points_left, last_edited, save_name = BURNDOWN_SAVE_NAME):
     plt.bar(0, points_left[0], color="green", label="start", width=0.5)
 
     """ Draw the actual work done """
-    if (last_edited > 0) and (last_edited <= len(points_left)):
+    if (last_edited > 1) and (last_edited <= len(points_left)):
         plt.bar(range(1,last_edited), \
                 points_left[1:last_edited], \
                 color="red", label="actual", width=0.5)
 
     """ Draw the work still to be done """
-    if (last_edited >= 0) and (last_edited < len(points_left)):
-        plt.bar(range(last_edited+1,len(points_left)), \
-                points_left[last_edited+1:len(points_left)], \
+    if (last_edited >= 1) and (last_edited < len(points_left)):
+        plt.bar(range(last_edited,len(points_left)), \
+                points_left[last_edited:len(points_left)], \
                 color="grey", label="estimate", width=0.5)
 
     plt.ylim(0, points_left[0])
@@ -228,7 +228,7 @@ def main():
         """ Calc work left for a slide in the sprint from sizes """
         slide_points_left = extract_work(slide, fields_map)
         if slide_points_left is None:
-            logger.error("Slide '{:d}': Wrong synatx in size fields!".format(num+1))
+            logger.error("Slide '{:d}': Wrong syntax in size fields!".format(num+1))
             return 8
 
         if len(slide_points_left) == 0:
@@ -236,7 +236,15 @@ def main():
             continue
 
         """ Determine the index of the last value entered """
-        last_edited = min(last_edited , len(slide_points_left))
+        if len(slide_points_left) > last_edited:
+            """ All sizes have to be equal for burndown """
+            logger.error("Slide '{:d}': Size entries exceed previous ones.Fix sizes!".format(num+1))
+            return 9
+
+        last_edited = len(slide_points_left)
+        if last_edited < 1:
+            logger.error("Slide '{:d}': No Size entry.Fix sizes!".format(num+1))
+            return 10
 
         """ Add entered values """
         edited_range = range(len(slide_points_left))
@@ -250,6 +258,7 @@ def main():
         
         logger.info("Slide '{:d}': Included in work to be done!".format(num+1))
 
+        
     logger.info("Work left is consistently entered including sprint day {:d}."
                 .format(last_edited))
 
@@ -285,7 +294,7 @@ def main():
         prs.save(args.the_pptx)
     except:
         logger.error("Cannot save the presentation. If it is open consider to close it!")
-        return 9
+        return 11
     
     logger.info("Saved the presentation to '{}'".format(args.the_pptx))
     
