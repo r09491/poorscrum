@@ -6,6 +6,8 @@ __doc__ = """ """
 
 from poorscrum import Poorscrum_Tasks, Status, story_points, __version__
 
+from shutil import copy2
+
 from jinja2 import Template
 
 import configparser
@@ -18,6 +20,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
+""" Directory with the rendering templates for jinja2 """
+TEMPLATES = "poorjinja"
           
 def parse_arguments():
     """Parse command line arguments"""
@@ -33,7 +37,7 @@ def parse_arguments():
                         action="store_true", 
                         help="Do not save the presentation")
 
-    parser.add_argument("to_html", nargs=1, 
+    parser.add_argument("to_html_dir", nargs=1, 
                         help="PPTX file to import the story slides to")
 
     parser.add_argument("from_text", nargs="+", 
@@ -43,15 +47,18 @@ def parse_arguments():
 
 
 def read_story_as_dict(from_story_file):
-    """ Returns a story from an existing story file as dictionary
+    """ Returns a key value pairs from an existing story file as dictionary
     """
-
+    
     story = configparser.ConfigParser()
-    try:
-        story.read(from_story_file)
-        return dict((s.replace(" ", "_"), story.get(s, "text")) for s in story.sections())
-    except:
-        return None
+    story.read(from_story_file)
+    
+    kv = dict((s.replace(' ', '_'), story.get(s, "text")) 
+                  for s in story.sections() if s != "tasks")
+    kv.update((o, story.get("tasks", o))
+                  for o in story.options("tasks"))
+
+    return kv
 
     
 def read_file_as_template(from_template_file_name):
@@ -112,7 +119,7 @@ def import_tasks(from_tasks, to_prs):
 def main():
     args = parse_arguments()
 
-    if args.to_html is None:
+    if args.to_html_dir is None:
         logger.error("Must provide root directory for html pages!")
         return 1
 
@@ -120,15 +127,15 @@ def main():
         logger.error("Must provide TEXT backlog files for input!")
         return 2
 
-    if not os.path.isdir(args.to_html[0]):
+    if not os.path.isdir(args.to_html_dir[0]):
         logger.error("Root directory '{}' for 'stories' directory does not exist."
-                     .format(args.to_html[0]))
+                     .format(args.to_html_dir[0]))
         return 3
 
-    stories_dir = os.path.join(args.to_html[0], "stories")
+    stories_dir = os.path.join(args.to_html_dir[0], "stories")
     if not os.path.isdir(stories_dir):
         logger.error("Directory 'stories' for story pages does not exist under '{}'."
-                     .format(args.to_html[0]))
+                     .format(args.to_html_dir[0]))
         return 4
 
 
@@ -150,18 +157,23 @@ def main():
 
     """ Check templates """
         
-    templates_dir = os.path.join(args.to_html[0], "templates")
+    templates_dir = TEMPLATES
     if not os.path.isdir(templates_dir):
         logger.error("Directory 'templates' for story pages does not exist  under '{}'."
-                     .format(args.to_html[0]))
+                     .format(args.to_html_dir[0]))
         return 7
     
-    template_file = os.path.join(templates_dir, "story_template.html")
+    template_file = os.path.join(templates_dir, "poorstory_template.jinja2")
     template = read_file_as_template(template_file)
     if template is None:
         logger.error("Template file is illegal '{}'.".format(template_file))
         return 8
 
+
+    """ Copy the CSS file intor the stories directory """
+    
+    copy2( os.path.join(TEMPLATES, "poorstory_style.css"), stories_dir)
+    
     
     """ Convert all provided story files to html pages """
 
@@ -175,13 +187,14 @@ def main():
         if story_as_dict is None:
             logger.error("Story file is illegal '{}'.".format(story_file))
             continue
-        
-        if args.dry:
-            logger.info("Would save html to '{}' .".format(story_file))
-            continue
 
         html_file = os.path.splitext(os.path.basename(story_file))[0]+".html"
         html_file = os.path.join(stories_dir, html_file)
+        
+        if args.dry:
+            logger.info("Would save html to '{}' .".format(html_file))
+            continue
+
         if not write_dict_as_html_file(story_as_dict, template, html_file):
             logger.error("Html file writing failed '{}'.".format(html_file))
             continue

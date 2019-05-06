@@ -1,0 +1,106 @@
+body{
+	#width: 960px;
+	#height: 960px;
+
+	font-size: 10px;
+	font-family: Helvetica, Sans-serif;
+}
+
+div.page{
+	background-color:whitesmoke;
+
+	box-sizing: border-box;
+
+	#width: 105.0mm;
+	height: 148.5mm;
+	width: 105mm;
+	#height: 80%;
+
+	margin:1mm 1mm;
+	
+	float: left;
+
+	border: solid 1px black;		
+
+}
+
+div.line{
+	#margin: 0 0 0 0;
+	margin-top:1mm;
+	margin-left: 1mm;
+	margin-right:1mm;
+	
+	box-sizing: border-box;
+	
+	width: 98%;
+	#width: 105.0mm;
+	#height: auto;
+	float:left;
+	
+	#border: solid 1px orange;			
+}
+
+div.info{
+	margin-left: 1%;
+	margin-right:1%;
+	
+	box-sizing: border-box;
+		
+	#width: 100%;
+	
+	float: left;
+	#height: auto;
+	
+	#border: solid 1px magenta;		
+}
+
+div.key{
+	margin: 0 0 0 0;
+
+	background-color:whitesmoke;
+
+	width: 100%;
+
+	font-size: 0.8em;
+	font-style: oblique;
+}
+
+div.text{
+	#margin: 0 0 0 0;
+
+	box-sizing: border-box;
+	
+	background-color:wheat;
+
+	padding: 1mm;
+
+	#height: 90%;
+
+	#border: solid 1px blue;
+}
+
+div.number{
+	#margin: 0 0 0 0;
+	margin-right: 1%
+	margin-right: 1%
+
+	box-sizing: border-box;
+
+	background-color:wheat;
+	
+	#margin-right: 1mm;
+
+	padding: 1mm;
+
+	height: 3mm;
+	
+	#border: solid 1px red;			
+}
+
+div.clear{
+	clear: both;
+}
+
+p.text{
+	margin-top: 0px;
+}
