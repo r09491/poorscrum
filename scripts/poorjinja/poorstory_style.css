@@ -6,15 +6,20 @@ body{
 	font-family: Helvetica, Sans-serif;
 }
 
+h1{
+	font-size: 24px;
+	text-align: left;	
+}
+
 div.page{
 	background-color:whitesmoke;
 
 	box-sizing: border-box;
 
-	#width: 105.0mm;
+	width: 105.0mm;
 	height: 148.5mm;
-	width: 105mm;
-	#height: 80%;
+	#width: 500px;
+	#height:724px;
 
 	margin:1mm 1mm;
 	
@@ -61,7 +66,7 @@ div.key{
 
 	width: 100%;
 
-	font-size: 0.8em;
+	font-size: 10px;
 	font-style: oblique;
 }
 
@@ -73,6 +78,8 @@ div.text{
 	background-color:wheat;
 
 	padding: 1mm;
+
+	font-size: 12px;
 
 	#height: 90%;
 
@@ -93,6 +100,8 @@ div.number{
 	padding: 1mm;
 
 	height: 3mm;
+
+	font-size: 12px;
 	
 	#border: solid 1px red;			
 }
@@ -103,4 +112,7 @@ div.clear{
 
 p.text{
 	margin-top: 0px;
+
+	font-size: 12px;
+
 }
