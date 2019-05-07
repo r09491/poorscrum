@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+	<title>Tiger Product Backlog</title>
+	<meta charset="utf-8"/>
+	<link href="poorindex_style.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+
+
+<div class="content">
+	<h1>Tiger Productbacklog Status Board<h1>
+	<p>This page shows the state of the stories in the product backlog. By clicking on the numeric id it is displayed.</p>
+
+	{% for state, links in index.items() %}
+		<div class="status">
+			<h2>{{state}}<h2>
+			<ul>
+			{% for link in links %}
+				<li><a href="{{link[2]}}">{{link[0]}}</a></li>
+			{% endfor %}
+			</ul>
+		</div>
+	{% endfor %}
+
+	<div class="clear">
+	</div> 
+</div>
+</body>
+</html>
