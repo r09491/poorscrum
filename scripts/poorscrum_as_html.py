@@ -64,21 +64,31 @@ def read_story_as_dict(from_story_file):
 def read_file_as_template(from_template_file_name):
     """ Returns a template from an existing template file
     """
-
     try:
         with open(from_template_file_name, 'r') as template:
             return Template(template.read())
     except:
         return None
 
-def write_dict_as_html_file(from_dict, template, html_file_name):
-    """ Returns a template from an existing template file
+def write_story_as_html_file(from_dict, template, html_file_name):
+    """ Writes a story html file from an existing template file
     """
     
     with open(html_file_name, 'w') as html:
         html.write(template.render(story=from_dict))
 
     return True
+
+
+def write_index_as_html_file(from_dict, template, index_file_name):
+    """ Writes a index html file from an existing template file
+    """
+    
+    with open(index_file_name, 'w') as index:
+        index.write(template.render(index=from_dict))
+
+    return True
+
 
 def import_tasks(from_tasks, to_prs):
     """ Imports the tasks items for a tasks slide
@@ -163,15 +173,23 @@ def main():
                      .format(args.to_html_dir[0]))
         return 7
     
-    template_file = os.path.join(templates_dir, "poorstory_template.jinja2")
-    template = read_file_as_template(template_file)
-    if template is None:
-        logger.error("Template file is illegal '{}'.".format(template_file))
+    story_template_file = os.path.join(templates_dir, "poorstory_template.jinja2")
+    story_template = read_file_as_template(story_template_file)
+    if story_template is None:
+        logger.error("Template file is illegal '{}'.".format(story_template_file))
         return 8
 
 
-    """ Copy the CSS file intor the stories directory """
-    
+    index_template_file = os.path.join(templates_dir, "poorindex_template.jinja2")
+    index_template = read_file_as_template(index_template_file)
+    if index_template is None:
+        logger.error("Template file is illegal '{}'.".format(index_template_file))
+        return 9
+
+
+    """ Copy the CSS file into the html structure """
+
+    copy2( os.path.join(TEMPLATES, "poorindex_style.css"), args.to_html_dir[0])
     copy2( os.path.join(TEMPLATES, "poorstory_style.css"), stories_dir)
     
     
@@ -179,6 +197,9 @@ def main():
 
     logger.info("Directory for story pages is '{}'.".format(stories_dir))
 
+    """ create a dictionary with story states as keys"""
+    index_as_dict = {}
+    
     for story_file in args.from_text:
 
         logger.info("Processing '{}'.".format(story_file))
@@ -188,19 +209,37 @@ def main():
             logger.error("Story file is illegal '{}'.".format(story_file))
             continue
 
-        html_file = os.path.splitext(os.path.basename(story_file))[0]+".html"
-        html_file = os.path.join(stories_dir, html_file)
+        story_html_file = os.path.splitext(os.path.basename(story_file))[0]+".html"
+        story_html_file = os.path.join(stories_dir, story_html_file)
         
         if args.dry:
-            logger.info("Would save html to '{}' .".format(html_file))
+            logger.info("Would save html to '{}' .".format(story_html_file))
             continue
 
-        if not write_dict_as_html_file(story_as_dict, template, html_file):
-            logger.error("Html file writing failed '{}'.".format(html_file))
+        if not write_story_as_html_file(story_as_dict, story_template, story_html_file):
+            logger.error("Story html file writing failed '{}'.".format(story_html_file))
             continue
         
-        logger.info("Html file writing succeeded '{}'.".format(html_file))
+        logger.info("Story html file writing succeeded '{}'.".format(story_html_file))
         
+        """ Fill the index dictionary """
+        if not (story_as_dict['status'] in index_as_dict):
+            index_as_dict[story_as_dict['status']] = []
+        index_as_dict[story_as_dict['status']].append(
+            [story_as_dict['id'],
+             list(story_as_dict['devs'].split()),
+             os.path.join(os.path.split(stories_dir)[-1],
+                          os.path.split(story_html_file)[-1])])
+        
+
+    index_html_file = "index.html"
+    index_html_file = os.path.join(args.to_html_dir[0], index_html_file)
+    if not write_index_as_html_file(index_as_dict, index_template, index_html_file):
+        logger.error("Index html file writing failed '{}'.".format(index_html_file))
+    else:
+        logger.info("Index html file writing succeeded '{}'.".format(index_html_file))
+
+
     return 0
 
         
