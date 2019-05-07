@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-	<title>Story {{ story.id }}</title>
+	<title>Story Id#{{ story.id }}</title>
 	<meta charset="utf-8"/>
 	<link href="poorstory_style.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -9,7 +9,11 @@
 <body>
 
 <!-- page #1 -->
+<a href="../index.html">board</a>
+
+<h1>Story #{{story.id}}</h1>
 <div class="page">
+
 	<div class="line">
 		<div class="info" style="width:98%;">
 			<div class="key">Title</div>
@@ -97,7 +101,6 @@
 	
 <!-- page #2 -->
 <div class="page">
-
 	<div class="line">
 		<div class="info" style="width:98%;">
 			<div class="key">Acceptance Criteria 1</div>
