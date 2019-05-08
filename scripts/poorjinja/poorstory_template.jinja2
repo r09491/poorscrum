@@ -54,27 +54,9 @@
 		<div class="info" style="width:98%;">
 			<div class="key">Devs</div>
 			<div class="text" style="height:6mm;">
-				{% if story.task1.split(',')[2]|int > 0 and story.task1.split(',')[4] != "dev" %}
-					{{ story.task1.split(',')[4] }}
-				{% endif %}
-				{% if story.task2.split(',')[2]|int > 0 and story.task2.split(',')[4] != "dev" %}
-					{{ story.task2.split(',')[4] }}
-				{% endif %}
-				{% if story.task3.split(',')[2]|int > 0 and story.task3.split(',')[4] != "dev" %}
-					{{ story.task3.split(',')[4] }}
-				{% endif %}
-				{% if story.task4.split(',')[2]|int > 0 and story.task4.split(',')[4] != "dev" %}
-					{{ story.task4.split(',')[4] }}
-				{% endif %}
-				{% if story.task5.split(',')[2]|int > 0 and story.task5.split(',')[4] != "dev" %}
-					{{ story.task5.split(',')[4] }}
-				{% endif %}
-				{% if story.task6.split(',')[2]|int > 0 and story.task6.split(',')[4] != "dev" %}
-					{{ story.task6.split(',')[4] }}
-				{% endif %}
-				{% if story.task7.split(',')[2]|int > 0 and story.task7.split(',')[4] != "dev" %}
-					{{ story.task7.split(',')[4] }}
-				{% endif %}
+				{% for dev in devs %}
+					{{ dev }}
+				{% endfor %}
                         </div>	
 		</div>
 	</div>

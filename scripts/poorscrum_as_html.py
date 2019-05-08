@@ -47,20 +47,18 @@ def parse_arguments():
 
 
 def read_story_as_dict(from_story_file):
-    """ Returns a key value pairs from an existing story file as dictionary
+    """ Returns a key value pairs from an existing story file as a story and
+    task dictionary
     """
     
     story = configparser.ConfigParser()
     story.read(from_story_file)
     
-    kv = dict((s.replace(' ', '_'), story.get(s, "text")) 
-                  for s in story.sections() if s != "tasks")
-    kv.update((o, story.get("tasks", o))
-                  for o in story.options("tasks"))
+    return dict((s.replace(' ', '_'), story.get(s, "text")) 
+                  for s in story.sections() if s != "tasks"), \
+                  dict((o, story.get("tasks", o))
+                       for o in story.options("tasks"))
 
-    return kv
-
-    
 def read_file_as_template(from_template_file_name):
     """ Returns a template from an existing template file
     """
@@ -70,12 +68,13 @@ def read_file_as_template(from_template_file_name):
     except:
         return None
 
-def write_story_as_html_file(from_dict, template, html_file_name):
+def write_story_as_html_file(from_story_dict, from_devs_list,
+                             template, html_file_name):
     """ Writes a story html file from an existing template file
     """
     
     with open(html_file_name, 'w') as html:
-        html.write(template.render(story=from_dict))
+        html.write(template.render(story=from_story_dict, devs=from_devs_list))
 
     return True
 
@@ -212,8 +211,8 @@ def main():
 
         logger.info("Processing '{}'.".format(story_file))
 
-        story_as_dict = read_story_as_dict(story_file)
-        if story_as_dict is None:
+        story_as_dict, tasks_as_dict = read_story_as_dict(story_file)
+        if story_as_dict is None or tasks_as_dict is None:
             logger.error("Story file is illegal '{}'.".format(story_file))
             continue
 
@@ -224,7 +223,13 @@ def main():
             logger.info("Would save html to '{}' .".format(story_html_file))
             continue
 
-        if not write_story_as_html_file(story_as_dict, story_template, story_html_file):
+        tasks_as_list = [value.split(',') for value in tasks_as_dict.values()][:-1]
+        devs_as_list = list(set(task[4] for task in tasks_as_list
+                                if task[4] != "<dev>" and int(task[2])>0))
+
+        print(devs_as_list)
+        if not write_story_as_html_file(story_as_dict, devs_as_list,
+                                        story_template, story_html_file):
             logger.error("Story html file writing failed '{}'.".format(story_html_file))
             continue
         
@@ -251,8 +256,8 @@ def main():
 
         if story_as_dict['devs'] != "" and \
                story_as_dict['status'] in  ["ANALYSING", "commited", "SPRINTING"]:
-            for dev in story_as_dict['devs'].split():
-                if not (story_as_dict['devs'] in devs_as_dict):
+            for dev in devs_as_list:
+                if not (dev in devs_as_dict):
                     devs_as_dict[dev] = []
                 devs_as_dict[dev].append(
                     [story_as_dict['id'], story_html_path])
@@ -260,17 +265,22 @@ def main():
     if not args.dry:
         status_index_html_file = "status_index.html"
         status_index_html_file = os.path.join(args.to_html_dir[0], status_index_html_file)
-        if not write_index_as_html_file(status_as_dict, status_index_template, status_index_html_file):
-            logger.error("Status index html file writing failed '{}'.".format(status_index_html_file))
+        if not write_index_as_html_file(status_as_dict, status_index_template,
+                                        status_index_html_file):
+            logger.error("Status index html file writing failed '{}'."
+                         .format(status_index_html_file))
         else:
-            logger.info("Status_ ndex html file writing succeeded '{}'.".format(status_index_html_file))
+            logger.info("Status_ ndex html file writing succeeded '{}'."
+                        .format(status_index_html_file))
 
         devs_index_html_file = "devs_index.html"
         devs_index_html_file = os.path.join(args.to_html_dir[0], devs_index_html_file)
         if not write_index_as_html_file(devs_as_dict, devs_index_template, devs_index_html_file):
-            logger.error("Devs_index html file writing failed '{}'.".format(devs_index_html_file))
+            logger.error("Devs_index html file writing failed '{}'."
+                         .format(devs_index_html_file))
         else:
-            logger.info("Devs_index html file writing succeeded '{}'.".format(devs_index_html_file))
+            logger.info("Devs_index html file writing succeeded '{}'."
+                        .format(devs_index_html_file))
 
 
     return 0
