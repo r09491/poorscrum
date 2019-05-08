@@ -2,8 +2,20 @@ body{
 	#width: 960px;
 	#height: 960px;
 
-	font-size: 10px;
+	font-size: 12px;
 	font-family: Helvetica, Sans-serif;
+}
+
+a{
+	font-size: 10px;
+	text-decoration: none;
+}
+
+p.text{
+	margin-top: 0px;
+
+	font-size: 12px;
+
 }
 
 h1{
@@ -110,9 +122,4 @@ div.clear{
 	clear: both;
 }
 
-p.text{
-	margin-top: 0px;
 
-	font-size: 12px;
-
-}

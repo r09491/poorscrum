@@ -6,14 +6,13 @@
 	<link href="poorindex_style.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
-
-<a href="status_index.html">Status Board</a>
+<a href="status_index.html">| To Status Board |</a>
 
 <div class="content">
 	<h1>Tiger Devs Backlog Board<h1>
 	<p>This page shows the devs of the stories in the product backlog. By clicking on the numeric id it is displayed.</p>
 
-	<p>A story may be allocated to several developers in the states <i>commited</i>, <i>ANALYSING</i> and  <i>SPRINTING</i>.</p>
+	<p>A story may be allocated to several developers in the states <b>commited</b>, <b>ANALYSING</b> and <b>SPRINTING</b>.</p>
 
 	{% for dev, links in index.items() %}
 		<div class="status">

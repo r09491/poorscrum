@@ -2,8 +2,13 @@ body{
 	#width: 960px;
 	#height: 960px;
 
-	font-size: 10px;
+	font-size: 12px;
 	font-family: Helvetica, Sans-serif;
+}
+
+a{
+	font-size: 10px;
+	text-decoration: none;
 }
 
 p{
@@ -36,9 +41,6 @@ ul li{
   	list-style-type: none;
 }
 
-a{
-	text-decoration: none;
-}
 
 .content {
   ## max-width: 640px;

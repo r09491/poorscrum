@@ -227,7 +227,6 @@ def main():
         devs_as_list = list(set(task[4] for task in tasks_as_list
                                 if task[4] != "<dev>" and int(task[2])>0))
 
-        print(devs_as_list)
         if not write_story_as_html_file(story_as_dict, devs_as_list,
                                         story_template, story_html_file):
             logger.error("Story html file writing failed '{}'.".format(story_html_file))
