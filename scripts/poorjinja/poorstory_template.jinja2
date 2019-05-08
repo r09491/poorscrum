@@ -11,8 +11,8 @@
 <!-- page #1 -->
 <a href="../status_index.html">| To Status Board |</a>
 <a href="../devs_index.html">| To Devs Board |</a>
-
 <h1>Story #{{story.id}}</h1>
+
 <div class="page">
 
 	<div class="line">
@@ -177,6 +177,42 @@
 		</div>
 	</div>
 	
+</div>
+
+<!-- page #3 -->
+<div class="page">
+	<div class="line">
+		<div class="info" style="width:98%;">
+			<div class="key">Tasks</div>
+			<div class="tasks">
+				<table>
+
+				<tr>
+					<th style="width:50%;">task</th>
+					<th>plan</th><th>todo</th><th>done</th><th>dev</th>
+				</tr)
+				</br>
+
+				{% for row in tasks[:-1] %}
+					<tr>
+					{%for col in row %}
+						<td>{{col}}</td>
+					{% endfor %}
+					</tr>					
+				{% endfor %}
+
+				{% for row in tasks[-1:] %}
+					<tr style="color: brown;">
+					{%for col in row %}
+						<td>{{col}}</td>
+					{% endfor %}
+					</tr>					
+				{% endfor %}
+
+				</table>
+			</div>
+		</div>
+	</div>
 </div>
 
 <!-- page clear -->

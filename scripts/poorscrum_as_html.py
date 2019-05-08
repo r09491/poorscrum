@@ -68,13 +68,15 @@ def read_file_as_template(from_template_file_name):
     except:
         return None
 
-def write_story_as_html_file(from_story_dict, from_devs_list,
+def write_story_as_html_file(from_story_dict, from_devs_list, from_tasks_list,
                              template, html_file_name):
     """ Writes a story html file from an existing template file
     """
     
     with open(html_file_name, 'w') as html:
-        html.write(template.render(story=from_story_dict, devs=from_devs_list))
+        html.write(template.render(story=from_story_dict,
+                                   devs=from_devs_list,
+                                   tasks=from_tasks_list))
 
     return True
 
@@ -203,9 +205,11 @@ def main():
 
     logger.info("Directory for story pages is '{}'.".format(stories_dir))
 
-    """ create a dictionary with story states as keys"""
+    """ create a dictionary with story states as keys for indices """
     status_as_dict = {}
     devs_as_dict = {}
+
+    """ Create and write all story files """
     
     for story_file in args.from_text:
 
@@ -223,11 +227,11 @@ def main():
             logger.info("Would save html to '{}' .".format(story_html_file))
             continue
 
-        tasks_as_list = [value.split(',') for value in tasks_as_dict.values()][:-1]
-        devs_as_list = list(set(task[4] for task in tasks_as_list
+        tasks_as_list = [value.split(',') for value in tasks_as_dict.values()]
+        devs_as_list = list(set(task[4] for task in tasks_as_list[:-1]
                                 if task[4] != "<dev>" and int(task[2])>0))
 
-        if not write_story_as_html_file(story_as_dict, devs_as_list,
+        if not write_story_as_html_file(story_as_dict, devs_as_list, tasks_as_list,
                                         story_template, story_html_file):
             logger.error("Story html file writing failed '{}'.".format(story_html_file))
             continue
@@ -260,7 +264,9 @@ def main():
                     devs_as_dict[dev] = []
                 devs_as_dict[dev].append(
                     [story_as_dict['id'], story_html_path])
-        
+
+    """ Create and write the index files """
+    
     if not args.dry:
         status_index_html_file = "status_index.html"
         status_index_html_file = os.path.join(args.to_html_dir[0], status_index_html_file)
