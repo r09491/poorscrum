@@ -235,13 +235,16 @@ def main():
             logger.info("Slide '{:d}': Skipped since not a story file!".format(num+1))
             continue
 
-        """ Determine the index of the last value entered """
-        if len(slide_points_left) > last_edited:
-            """ All sizes have to be equal for burndown """
-            logger.error("Slide '{:d}': Size entries exceed previous ones.Fix sizes!".format(num+1))
-            return 9
 
-        last_edited = len(slide_points_left)
+        """
+        A length of '1' means there is only an estimate: No editing has taken place. Ignore!
+        """
+        if len(slide_points_left)>1:
+            last_edited = min(len(slide_points_left), last_edited) 
+
+        """
+        A length of '0' means: No editing has taken place. Error!
+        """
         if last_edited < 1:
             logger.error("Slide '{:d}': No Size entry.Fix sizes!".format(num+1))
             return 10
@@ -250,14 +253,13 @@ def main():
         edited_range = range(len(slide_points_left))
         for index in edited_range:
             total_points_left[index] += slide_points_left[index]
-
+        
         """ Add the last entered value """
         unedited_range = range(len(slide_points_left), len(total_points_left))
         for index in unedited_range:
             total_points_left[index] += slide_points_left[-1]
         
         logger.info("Slide '{:d}': Included in work to be done!".format(num+1))
-
         
     logger.info("Work left is consistently entered including sprint day {:d}."
                 .format(last_edited))
