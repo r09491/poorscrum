@@ -90,6 +90,7 @@ def write_index_as_html_file(from_dict, template, index_file_name):
     return True
 
 
+
 def import_tasks(from_tasks, to_prs):
     """ Imports the tasks items for a tasks slide
     """
@@ -180,10 +181,16 @@ def main():
         return 8
 
 
-    index_template_file = os.path.join(templates_dir, "poorindex_template.jinja2")
-    index_template = read_file_as_template(index_template_file)
-    if index_template is None:
-        logger.error("Template file is illegal '{}'.".format(index_template_file))
+    status_index_template_file = os.path.join(templates_dir, "poorstatus_template.jinja2")
+    status_index_template = read_file_as_template(status_index_template_file)
+    if status_index_template is None:
+        logger.error("Template file is illegal '{}'.".format(status_index_template_file))
+        return 9
+
+    devs_index_template_file = os.path.join(templates_dir, "poordevs_template.jinja2")
+    devs_index_template = read_file_as_template(devs_index_template_file)
+    if devs_index_template is None:
+        logger.error("Template file is illegal '{}'.".format(devs_index_template_file))
         return 9
 
 
@@ -198,7 +205,8 @@ def main():
     logger.info("Directory for story pages is '{}'.".format(stories_dir))
 
     """ create a dictionary with story states as keys"""
-    index_as_dict = {}
+    status_as_dict = {}
+    devs_as_dict = {}
     
     for story_file in args.from_text:
 
@@ -222,22 +230,47 @@ def main():
         
         logger.info("Story html file writing succeeded '{}'.".format(story_html_file))
         
-        """ Fill the index dictionary """
-        if not (story_as_dict['status'] in index_as_dict):
-            index_as_dict[story_as_dict['status']] = []
-        index_as_dict[story_as_dict['status']].append(
-            [story_as_dict['id'],
-             list(story_as_dict['devs'].split()),
-             os.path.join(os.path.split(stories_dir)[-1],
-                          os.path.split(story_html_file)[-1])])
-        
 
-    index_html_file = "index.html"
-    index_html_file = os.path.join(args.to_html_dir[0], index_html_file)
-    if not write_index_as_html_file(index_as_dict, index_template, index_html_file):
-        logger.error("Index html file writing failed '{}'.".format(index_html_file))
-    else:
-        logger.info("Index html file writing succeeded '{}'.".format(index_html_file))
+        """ Determine html path relative to root """
+        
+        story_html_path = os.path.join(
+            os.path.split(stories_dir)[-1], # from root
+            os.path.split(story_html_file)[-1])
+
+        """ Fill the status dictionary """
+
+        if not (story_as_dict['status'] in status_as_dict):
+            status_as_dict[story_as_dict['status']] = []
+        status_as_dict[story_as_dict['status']].append(
+            [story_as_dict['id'], story_html_path])
+
+        """
+        Fill the devs dictionary if devs are give. A story may be allocated
+        to several developers
+        """
+
+        if story_as_dict['devs'] != "" and \
+               story_as_dict['status'] in  ["ANALYSING", "commited", "SPRINTING"]:
+            for dev in story_as_dict['devs'].split():
+                if not (story_as_dict['devs'] in devs_as_dict):
+                    devs_as_dict[dev] = []
+                devs_as_dict[dev].append(
+                    [story_as_dict['id'], story_html_path])
+        
+    if not args.dry:
+        status_index_html_file = "status_index.html"
+        status_index_html_file = os.path.join(args.to_html_dir[0], status_index_html_file)
+        if not write_index_as_html_file(status_as_dict, status_index_template, status_index_html_file):
+            logger.error("Status index html file writing failed '{}'.".format(status_index_html_file))
+        else:
+            logger.info("Status_ ndex html file writing succeeded '{}'.".format(status_index_html_file))
+
+        devs_index_html_file = "devs_index.html"
+        devs_index_html_file = os.path.join(args.to_html_dir[0], devs_index_html_file)
+        if not write_index_as_html_file(devs_as_dict, devs_index_template, devs_index_html_file):
+            logger.error("Devs_index html file writing failed '{}'.".format(devs_index_html_file))
+        else:
+            logger.info("Devs_index html file writing succeeded '{}'.".format(devs_index_html_file))
 
 
     return 0
