@@ -45,9 +45,6 @@ ul li{
 .content {
   ## max-width: 640px;
   ## margin: auto;
-
- 
-
 }
 
 .status {
@@ -70,6 +67,14 @@ ul li{
 
 	float: left;
 
+}
+
+.burndown{
+	width : 480;
+	height: 320;
+	border: solid black 2px;
+
+	float: right;
 }
 
 .clear {

@@ -4,7 +4,7 @@
 __author__ = "sepp.heid@t-online.de"
 __doc__ = """ """
 
-from poorscrum import Poorscrum_Tasks, Status, story_points, __version__
+from poorscrum import Poorscrum_Tasks, Status, burndown_as_image, story_points, __version__
 
 from shutil import copy2
 
@@ -59,6 +59,7 @@ def read_story_as_dict(from_story_file):
                   dict((o, story.get("tasks", o))
                        for o in story.options("tasks"))
 
+
 def read_file_as_template(from_template_file_name):
     """ Returns a template from an existing template file
     """
@@ -91,41 +92,28 @@ def write_index_as_html_file(from_dict, template, index_file_name):
     return True
 
 
-
-def import_tasks(from_tasks, to_prs):
-    """ Imports the tasks items for a tasks slide
-    """
-
-    """!!! Our tasks layout is always the one before the story layout !!!"""
-    tasks_slide_layout = to_prs.slide_layouts[-2]
-    to_slide = to_prs.slides.add_slide(tasks_slide_layout)
-    to_table = Poorscrum_Tasks(to_slide, to_prs.slide_height, to_prs.slide_width)
-    lastrow = len(to_table.table.rows)-1
+def get_work_todo(story_as_dict, total_work_edited, total_work_todo):        
     
-    try:
-        tasks = from_tasks.items("tasks")
-    except:
-        return None
+    story_size_all  = story_as_dict['size_1']
+    story_size_all += ' ' + story_as_dict['size_2']
+    story_size_all += ' ' + story_as_dict['size_3']
+    story_size_all += ' ' + story_as_dict['size_4']
 
-    wstart, wleft, wdone = 0, 0, 0
-    for row, task in enumerate(tasks):
-        if row < lastrow:
-            # Calculate all rows
-            data = task[1].split(',')
-            wstart += int(data[1]) 
-            wleft += int(data[2])
-            wdone += int(data[3])
-            # Output leading tasks only
-            to_table.put_as_row(row, data)
+    story_work_todo = story_size_all.split()
+    story_work_edited = len(story_size_all.split())
 
-    # Fibonacci!
-    total = ["Total",
-             str(story_points(wstart)),
-             str(story_points(wleft)),
-             str(story_points(wdone)), "Points"]
-    to_table.put_as_row(lastrow, total)
-        
-    return to_slide
+    if story_work_edited == 0: ## no editing yet
+        return None, None
+    
+    if story_work_edited > 1: ## real work done, not only estimate
+        total_work_edited = min(total_work_edited, story_work_edited)
+
+    for day in range(story_work_edited):
+        total_work_todo[day] += int(story_work_todo[day])
+    for day in range(story_work_edited, len(total_work_todo)):
+        total_work_todo[day] += int(story_work_todo[-1])
+
+    return total_work_edited, total_work_todo
 
 
 def main():
@@ -205,10 +193,17 @@ def main():
 
     logger.info("Directory for story pages is '{}'.".format(stories_dir))
 
+
+    """ ------------------------------------------------------------------- """
+
     """ create a dictionary with story states as keys for indices """
+
     status_as_dict = {}
     devs_as_dict = {}
 
+    total_work_edited = 20
+    total_work_todo = total_work_edited*[0]
+    
     """ Create and write all story files """
     
     for story_file in args.from_text:
@@ -245,7 +240,7 @@ def main():
             os.path.split(stories_dir)[-1], # from root
             os.path.split(story_html_file)[-1])
 
-        """ Fill the status dictionary """
+        """ Fill the status dictionary for the story pages """
 
         if not (story_as_dict['status'] in status_as_dict):
             status_as_dict[story_as_dict['status']] = []
@@ -253,17 +248,28 @@ def main():
             [story_as_dict['id'], story_html_path])
 
         """
-        Fill the devs dictionary if devs are give. A story may be allocated
-        to several developers
+        Fill the devs dictionary if devs are given for the task page. A story
+        may be allocated to several developers.
         """
 
         if story_as_dict['devs'] != "" and \
                story_as_dict['status'] in  ["ANALYSING", "commited", "SPRINTING"]:
+
             for dev in devs_as_list:
                 if not (dev in devs_as_dict):
                     devs_as_dict[dev] = []
                 devs_as_dict[dev].append(
                     [story_as_dict['id'], story_html_path])
+
+            """ Input for burndown """
+
+            total_work_edited, total_work_todo = get_work_todo(
+                story_as_dict, total_work_edited, total_work_todo)
+            if total_work_edited is None or total_work_todo is None: 
+                logger.error("Sizes are not entered '{}'.".format(story_html_file))
+                return 10
+
+    """ ------------------------------------------------------------------- """
 
     """ Create and write the index files """
     
@@ -275,8 +281,11 @@ def main():
             logger.error("Status index html file writing failed '{}'."
                          .format(status_index_html_file))
         else:
-            logger.info("Status_ ndex html file writing succeeded '{}'."
+            logger.info("Status index html file writing succeeded '{}'."
                         .format(status_index_html_file))
+
+
+        copy2(burndown_as_image(total_work_edited, total_work_todo), args.to_html_dir[0])
 
         devs_index_html_file = "devs_index.html"
         devs_index_html_file = os.path.join(args.to_html_dir[0], devs_index_html_file)
@@ -286,7 +295,6 @@ def main():
         else:
             logger.info("Devs_index html file writing succeeded '{}'."
                         .format(devs_index_html_file))
-
 
     return 0
 

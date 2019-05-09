@@ -14,6 +14,11 @@
 
 	<p>A story may be allocated to several developers in <b>commited</b>, <b>ANALYSING</b> and <b>SPRINTING</b> for different tas to be worked in parallel or in seriel.</p>
 
+	<div class="burndown">
+		<img src="poorscrum_burndown.png" alt="Poorscrum Burndown Chart" width=420=px height=320px>
+	</div> 
+
+
 	{% for dev, links in index.items() %}
 		<div class="status">
 			<h2>{{dev}}<h2>
@@ -24,6 +29,7 @@
 			</ul>
 		</div>
 	{% endfor %}
+
 
 	<div class="clear">
 	</div> 
