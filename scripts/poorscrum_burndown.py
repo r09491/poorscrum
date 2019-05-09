@@ -12,17 +12,14 @@ from pptx import Presentation
 from pptx.exc import PackageNotFoundError
 from pptx.util import Inches
 
-from poorscrum import SPRINT_FILE, BURNDOWN_SAVE_NAME, read_fields, __version__
+from poorscrum import SPRINT_FILE,read_fields, burndown_as_image, __version__
 
 import configparser
 
-from matplotlib import rcParams
-import matplotlib.pyplot as plt
 
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
-
 
 
 MIN_DAYS, MAX_DAYS = 0, 20
@@ -121,54 +118,12 @@ def extract_work(from_slide, with_pickup):
     return [int(c) for c in text.split()]
 
 
-def plot_burndown(points_left, last_edited, save_name = BURNDOWN_SAVE_NAME):
-    sprint_days = len(points_left)
-
-    rcParams['figure.figsize'] = (8, 6)
-
-    plt.close("all")
-
-    """ Draw the optimal line """
-    plt.plot((0, sprint_days-1), (max(points_left), 0), color="blue", label="optimal")
-
-    """ Draw the committed story points after sprint planning """
-    plt.bar(0, points_left[0], color="green", label="start", width=0.5)
-
-    """ Draw the actual work done """
-    if (last_edited > 1) and (last_edited <= len(points_left)):
-        plt.bar(range(1,last_edited), \
-                points_left[1:last_edited], \
-                color="red", label="actual", width=0.5)
-
-    """ Draw the work still to be done """
-    if (last_edited >= 1) and (last_edited < len(points_left)):
-        plt.bar(range(last_edited,len(points_left)), \
-                points_left[last_edited:len(points_left)], \
-                color="grey", label="estimate", width=0.5)
-
-    plt.ylim(0, points_left[0])
-    plt.yticks(range(0, points_left[0]+1, max(1, int(points_left[0] / 5))))
-
-    plt.xlim(-1, sprint_days)
-    plt.xticks(range(0, sprint_days+1, max(5, int(sprint_days / 5))))
-
-    plt.grid()
-    plt.legend()
-
-    plt.xlabel('SPRINT DAYS [days]')
-    plt.ylabel('TO BE DONE [story points]')
-
-    plt.title("Sprint Burndown", fontsize=20)
-    plt.savefig(save_name)
-
-    return save_name
-
-
 def add_burndown_to_pptx(the_pptx, image_path):
     blank_slide_layout = the_pptx.slide_layouts[6]
     slide = the_pptx.slides.add_slide(blank_slide_layout)
     left = top = Inches(1)
     image = slide.shapes.add_picture(image_path, left, top)
+
 
 def main():
     args = parse_arguments()
@@ -223,7 +178,7 @@ def main():
     until the end of the sprint. These are called the 'unedited'
     """
     last_edited = days
-    total_points_left = (days)*[0]
+    total_work_left = (days)*[0]
     for num, slide in enumerate(prs.slides):
         """ Calc work left for a slide in the sprint from sizes """
         slide_points_left = extract_work(slide, fields_map)
@@ -252,12 +207,12 @@ def main():
         """ Add entered values """
         edited_range = range(len(slide_points_left))
         for index in edited_range:
-            total_points_left[index] += slide_points_left[index]
+            total_work_left[index] += slide_points_left[index]
         
         """ Add the last entered value """
-        unedited_range = range(len(slide_points_left), len(total_points_left))
+        unedited_range = range(len(slide_points_left), len(total_work_left))
         for index in unedited_range:
-            total_points_left[index] += slide_points_left[-1]
+            total_work_left[index] += slide_points_left[-1]
         
         logger.info("Slide '{:d}': Included in work to be done!".format(num+1))
         
@@ -267,26 +222,26 @@ def main():
     """ Output work to be done in period format """
     nperiods = periods+1
     for period in range(int(days / nperiods)):
-        period_estimate = total_points_left[(nperiods)*period:(nperiods)*(period+1)]
+        period_estimate = total_work_left[(nperiods)*period:(nperiods)*(period+1)]
         logger.info("Work left estimate for period {:d}: {}".
                     format(period, str(period_estimate)))
 
-    if points > total_points_left[0]:
+    if points > total_work_left[0]:
         logger.info("Devs offer more points than required ('{:d}' > '{:d}'). Sprint can work!"
-                    .format(points, total_points_left[0]))
+                    .format(points, total_work_left[0]))
         logger.info("'{:d}' points are available for analysis and spikes."
-                    .format(points - total_points_left[0]))
+                    .format(points - total_work_left[0]))
     else:
         logger.warn("Devs offers less points than required ('{:d}' < '{:d}'). Sprint cannot work!"
-                    .format(points, total_points_left[0]))
+                    .format(points, total_work_left[0]))
         logger.warn("Stories are to be reduced by '{:d}' points."
-                    .format(total_points_left[0] - points))
+                    .format(total_work_left[0] - points))
     
     if args.dry:
         logger.info("Dry run finished: ok.")
         return 0
 
-    save_name = plot_burndown(total_points_left, last_edited)
+    save_name = burndown_as_image(total_work_left, last_edited)
     logger.info("Saved the burddown chart to '{}'".format(save_name))
 
     add_burndown_to_pptx(prs, save_name)

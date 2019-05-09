@@ -12,7 +12,7 @@ class Status(Enum):
     """ Defines the current status in the life cycle of a story.
 
     The PO identifies a topic with value for the product, starts with its
-    analysis and creates a story in the Product Backlog. He may delgate it to
+    analysis and creates a story in the Product Backlog. He may delegate to
     an expert. If he is ready (the story meets INVEST) it is a candidate for a
     sprint and the PO presents it to the team in the sprint planning. The
     complete team accepts it if every Dev unterstands it. The complete team
