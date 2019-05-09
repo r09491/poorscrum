@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 """ Directory with the rendering templates for jinja2 """
-TEMPLATES = "poorjinja"
+TEMPLATES = os.path.join(os.path.dirname(__file__), "poorjinja")
           
 def parse_arguments():
     """Parse command line arguments"""
@@ -171,8 +171,8 @@ def main():
         
     templates_dir = TEMPLATES
     if not os.path.isdir(templates_dir):
-        logger.error("Directory 'templates' for story pages does not exist  under '{}'."
-                     .format(args.to_html_dir[0]))
+        logger.error("Directory '{}' for story pages does not exist."
+                     .format(templates_dir))
         return 7
     
     story_template_file = os.path.join(templates_dir, "poorstory_template.jinja2")
