@@ -20,7 +20,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
-HYPER = '<a href="http://sot2222.eu.eurocopter.corp/index.php?pagename='
+HYPER = '<a href="http://sot2222.eu.google.corp/index.php?pagename='
 PRHYPER = HYPER + 'pr&id={}" target="_blank">PR {}/</a>'
 ECRHYPER = HYPER + 'ecr&id={}" target="_blank">ECR {}/</a>'
 
@@ -109,7 +109,6 @@ def get_work_todo(story_as_dict, total_work_edited, total_work_todo):
 
     if story_work_edited == 0: ## no editing yet
         return None, None
-    
     if story_work_edited > 1: ## real work done, not only estimate
         total_work_edited = min(total_work_edited, story_work_edited)
 
@@ -143,7 +142,9 @@ def patch_reference_for_html(from_string):
                     in_first = False
             elif new == '/':
                 if in_first:
-                    patch += new 
+                    patch += new
+            elif new == '"':
+                pass
             else:
                 patch += new 
                 
