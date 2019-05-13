@@ -241,7 +241,7 @@ def main():
         logger.info("Dry run finished: ok.")
         return 0
 
-    save_name = burndown_as_image(total_work_left, last_edited)
+    save_name = burndown_as_image(last_edited, total_work_left)
     logger.info("Saved the burddown chart to '{}'".format(save_name))
 
     add_burndown_to_pptx(prs, save_name)
