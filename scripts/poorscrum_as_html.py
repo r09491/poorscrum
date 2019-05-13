@@ -20,6 +20,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
+HYPER = '<a href="http://sot2222.eu.eurocopter.corp/index.php?pagename='
+PRHYPER = HYPER + 'pr&id={}" target="_blank">PR {}/</a>'
+ECRHYPER = HYPER + 'ecr&id={}" target="_blank">ECR {}/</a>'
+
+
 """ Directory with the rendering templates for jinja2 """
 TEMPLATES = os.path.join(os.path.dirname(__file__), "poorjinja")
           
@@ -114,6 +119,62 @@ def get_work_todo(story_as_dict, total_work_edited, total_work_todo):
         total_work_todo[day] += int(story_work_todo[-1])
 
     return total_work_edited, total_work_todo
+
+
+def patch_reference_for_html(from_string):
+    """
+    Patch the reference from the config format to the html format
+    """
+    
+    patch = ""
+
+    old = ''
+    in_hlink = False
+    in_first = True
+    for new in from_string:
+        if in_hlink: ## in hyperlink text
+            if new == '>' :
+                in_hlink = False                
+                if old == '/':
+                    patch += "</a>"
+                    in_first = True
+                else:
+                    patch += '" target="_blank">'
+                    in_first = False
+            elif new == '/':
+                if in_first:
+                    patch += new 
+            else:
+                patch += new 
+                
+        else: ## standard text
+
+            if new == '<':
+                in_hlink = True
+                if in_first:
+                    patch += '<a href="'
+            else:
+                patch += new 
+
+        old = old if new.isspace() else new  ## Transitions without space
+
+    return patch
+
+def expand_reference_for_html(from_string):
+    """
+    Expand the reference from the config automatically for PRs and ECRs
+    """
+    reports = from_string.split()
+    prs = [index for index, item in enumerate(reports) if item.upper() in "PR"]
+    ecrs = [index for index, item in enumerate(reports) if item.upper() == "ECR"]
+
+    expand = ""
+    for index in prs:
+        expand += PRHYPER.format(reports[index+1], reports[index+1])
+    for index in prs:
+        expand += ECRHYPER.format(reports[index+1], reports[index+1])
+           
+    return expand
 
 
 def main():
@@ -215,6 +276,7 @@ def main():
             logger.error("Story file is illegal '{}'.".format(story_file))
             continue
 
+
         story_html_file = os.path.splitext(os.path.basename(story_file))[0]+".html"
         story_html_file = os.path.join(stories_dir, story_html_file)
         
@@ -226,6 +288,13 @@ def main():
         devs_as_list = list(set(task[4] for task in tasks_as_list[:-1]
                                 if task[4] != "<dev>" and int(task[2])>0))
 
+        story_as_dict['reference'] = story_as_dict['reference'].strip()
+        if story_as_dict['reference'].startswith('<'):
+            story_as_dict['reference'] = patch_reference_for_html(story_as_dict['reference'])
+        elif story_as_dict['reference'] != "":
+            story_as_dict['reference'] = expand_reference_for_html(story_as_dict['reference'])
+            
+        
         if not write_story_as_html_file(story_as_dict, devs_as_list, tasks_as_list,
                                         story_template, story_html_file):
             logger.error("Story html file writing failed '{}'.".format(story_html_file))
@@ -246,6 +315,7 @@ def main():
             status_as_dict[story_as_dict['status']] = []
         status_as_dict[story_as_dict['status']].append(
             [story_as_dict['id'], story_html_path])
+
 
         """
         Fill the devs dictionary if devs are given for the task page. A story

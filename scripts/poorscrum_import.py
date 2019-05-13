@@ -53,29 +53,46 @@ def parse_arguments():
 
 
 def import_text(to_frame, text):
-    is_link = False
     p = to_frame.paragraphs[0] # Already there!
     r = p.add_run()
-    for c in text:
-        if c == "\n":
-            p = to_frame.add_paragraph()
-            r = p.add_run()
-        elif c == '<':
-            is_link = True
-            r = p.add_run()
-        elif c == '>' and is_link:
-            is_link = False
-        elif c == '/' and is_link:
-            pass
-        else:
-            if is_link:
-                if r.hyperlink.address is None:
-                    r.hyperlink.address = c
-                else:
-                    r.hyperlink.address += c
-            else:
-                r.text += c
 
+    in_hlink = False
+    hlink = ""
+    old = ""
+    for new in text:
+        if in_hlink: ## in hyperlink text
+            if new == '>' :
+                in_hlink = False                
+
+                if old == "/":
+                    r = p.add_run()
+                else:
+                    r = p.add_run()
+                    r.hyperlink.address = hlink
+
+            elif new == '"': 
+                pass         ## Skip: Powerpoint does not like it 
+
+            elif new == '/': 
+                hlink += '/' ## Needed for directory paths
+            else:            
+                hlink += new ## Add anything else to the address part
+                
+        else: ## standard text
+            if new == '<':
+                ## A run already exists!
+                in_hlink = True                
+                hlink = ""
+
+            elif new == "\n":
+                p = to_frame.add_paragraph()
+                r = p.add_run()
+
+            else:
+                r.text += new ## Add anything else to the text part
+
+        old = old if new.isspace() else new  ## Transitions without space
+        
 
 def import_story(from_story, to_prs, with_pickup):
     """ Imports the story items for a story slide
