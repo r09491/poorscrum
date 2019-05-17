@@ -4,7 +4,11 @@
 __author__ = "sepp.heid@t-online.de"
 __doc__ = """ """
 
-from poorscrum import Poorscrum_Tasks, Status, burndown_as_image, story_points, __version__
+import poorscrum
+from poorscrum import __version__
+from poorscrum.poorscrum_config import SPRINT_FILE
+from poorscrum.poorscrum_sprint import *
+from poorscrum.poorscrum_plot import *
 
 from shutil import copy2
 
@@ -20,7 +24,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
-HYPER = '<a href="http://sot2222.eu.google.corp/index.php?pagename='
+HYPER = '<a href="http://sot2222.eu.eurocopter.corp/index.php?pagename='
 PRHYPER = HYPER + 'pr&id={}" target="_blank">PR {}/</a>'
 ECRHYPER = HYPER + 'ecr&id={}" target="_blank">ECR {}/</a>'
 
@@ -41,6 +45,9 @@ def parse_arguments():
     parser.add_argument("--dry", required=False,
                         action="store_true", 
                         help="Do not save the presentation")
+
+    parser.add_argument('-s', '--sprint_file', default=SPRINT_FILE,
+                        help='SCRUM sprint setup file')
 
     parser.add_argument("to_html_dir", nargs=1, 
                         help="PPTX file to import the story slides to")
@@ -245,6 +252,19 @@ def main():
         return 9
 
 
+    """ Read the sprint properties """
+
+    days, periods, points = read_sprint_properties(args.sprint_file)
+    if days is None:
+        logger.info("Using MAX values for sprint properties.")
+        days, periods, points = MAX_POINTS, MAX_PERIODS, MAX_POINTS
+
+
+    logger.info("The sprint length is '{:d}' days.".format(days))
+    logger.info("The sprint has '{:d}' periods with '{:d}' working days.".format(periods, int(days/periods)))
+    logger.info("The team has a capacity '{:d}' story points.".format(points))
+
+
     """ Copy the CSS file into the html structure """
 
     copy2( os.path.join(TEMPLATES, "poorindex_style.css"), args.to_html_dir[0])
@@ -256,6 +276,7 @@ def main():
     logger.info("Directory for story pages is '{}'.".format(stories_dir))
 
 
+
     """ ------------------------------------------------------------------- """
 
     """ create a dictionary with story states as keys for indices """
@@ -263,7 +284,7 @@ def main():
     status_as_dict = {}
     devs_as_dict = {}
 
-    total_work_edited = 20
+    total_work_edited = days
     total_work_todo = total_work_edited*[0]
     
     """ Create and write all story files """
@@ -338,7 +359,7 @@ def main():
                 story_as_dict, total_work_edited, total_work_todo)
             if total_work_edited is None or total_work_todo is None: 
                 logger.error("Sizes are not entered '{}'.".format(story_html_file))
-                return 10
+                return 13
 
     """ ------------------------------------------------------------------- """
 

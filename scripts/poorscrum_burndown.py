@@ -12,7 +12,14 @@ from pptx import Presentation
 from pptx.exc import PackageNotFoundError
 from pptx.util import Inches
 
-from poorscrum import SPRINT_FILE,read_fields, burndown_as_image, __version__
+
+import poorscrum
+from poorscrum import __version__
+from poorscrum.poorscrum_config import SPRINT_FILE
+from poorscrum.poorscrum_sprint import *
+from poorscrum.poorscrum_story import *
+from poorscrum.poorscrum_plot import *
+
 
 import configparser
 
@@ -22,10 +29,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 
-MIN_DAYS, MAX_DAYS = 0, 20
-MIN_PERIODS, MAX_PERIODS = 0, 4
-MIN_POINTS, MAX_POINTS = 0, 340 # 
-          
 def parse_arguments():
     """Parse command line arguments"""
 
@@ -48,40 +51,6 @@ def parse_arguments():
 
 
     return parser.parse_args()
-
-
-def parse_sprint(sprint_file = SPRINT_FILE):
-    """ Read the scrum sprint file
-    """
-    sprint = configparser.ConfigParser()
-    sprint.read(sprint_file)
-
-    try:
-        days = int(sprint.get("TIME", "days"))
-    except configparser.NoSectionError:
-        return None, None, None  # Illegal file content
-
-    if days < MIN_DAYS or days > MAX_DAYS:
-        return None, None # Illegal value
-
-    try:
-        periods = int(sprint.get("TIME", "periods"))
-    except configparser.NoSectionError:
-        return days, None, None  # Illegal file content
-
-    if periods < MIN_PERIODS or periods > MAX_PERIODS:
-        return days, None, None  # Illegal value
-
-    try:
-        points = 0
-        for dev, point in sprint.items("TEAM"):
-            if int(point) < MIN_POINTS or int(point) > MAX_POINTS:
-                return days, periods, None 
-            points += int(point)
-    except:
-        return days, periods, None # Illegal file content
-
-    return days, periods, points
 
 
 def extract_work(from_slide, with_pickup):
@@ -141,7 +110,7 @@ def main():
         logger.error("Must provide correct story item mappings. Run 'pptx_learn.py'!")
         return 3
 
-    days, periods, points = parse_sprint(args.sprint_file)
+    days, periods, points = read_sprint_properties(args.sprint_file)
     if days is None:
         logger.error("Must provide scrum guide legal number of days for sprint!")
         return 4
