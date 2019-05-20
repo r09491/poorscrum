@@ -3,6 +3,8 @@
 <head>
 	<title>Story Id#{{ story.id }}</title>
 	<meta charset="utf-8"/>
+	<meta http-equiv="expires" content="0"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<link href="poorstory_style.css" rel="stylesheet" type="text/css"/>
 </head>
 
@@ -147,22 +149,49 @@
 		</div>
 	</div>
 
+	{% set total_todo = story.size_1.split(' ') | first | int %}
+
 	<div class="line">			
 		<div class="info" style="width:23%;">
 			<div class="key">Work Done 1</div>
-			<div class="number">{{ story.size_1 }}</div>	
+			<div class="number"> 
+<!--
+				{% for todo in story.size_1.split(' ') %}
+			    		 {{ total_todo - todo | int }}
+				{% endfor %} 
+-->
+			</div>	
 		</div>
 		<div class="info" style="width:23%;">
 			<div class="key">Work Done 2</div>
-			<div class="number">{{ story.size_2 }}</div>	
+			<div class="number">
+<!--
+				{% for todo in story.size_2.split(' ') %}
+			    		 {{ total_todo - todo | int }}
+				{% endfor %} 
+-->
+                        </div>	
 		</div>
 		<div class="info" style="width:23%;">
 			<div class="key">Work Done 3</div>
-			<div class="number">{{ story.size_3 }}</div>	
+			<div class="number">
+<!--
+
+				{% for todo in story.size_3.split(' ') %}
+			    		 {{ total_todo - todo | int }}
+				{% endfor %} 
+-->
+			</div>	
 		</div>
 		<div class="info" style="width:23%;">
 			<div class="key">Work Done 4</div>
-			<div class="number">{{ story.size_4 }}</div>	
+			<div class="number">
+<!--
+				{% for todo in story.size_4.split(' ') %}
+			    		 {{ total_todo - todo | int }}
+				{% endfor %} 
+-->
+			</div>	
 		</div>
 	</div>
 
