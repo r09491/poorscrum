@@ -40,7 +40,7 @@ def parse_arguments():
                         action="store_true", 
                         help="Do not save the consolidated stories")
 
-    parser.add_argument('--sprint_day', default=0,
+    parser.add_argument('--sprint_day', type=int, default=MAX_DAYS,
                         help='The day in the sprint for consolidation')
 
     parser.add_argument('--sprint_file', default=SPRINT_FILE,
@@ -142,40 +142,53 @@ def consolidate_task_points(tasks_as_dict):
 def reset_stories(story_as_dict, tasks_as_dict):
     tasks_as_dict = reset_task_points(tasks_as_dict)
 
-    story_as_dict = story_as_dict
+    ## Do not override an estimate in the story size_1 field
+    ## Consider clearing all but the first 
+    ## story_as_dict = story_as_dict
     
     return story_as_dict, tasks_as_dict
 
+
+def fill_work_todo(story_as_dict, tasks_as_dict, sprint_day, days_per_period):
+    """
+    Fills the work todo list until 'for_sprint_day' with the last edit value
+    """
+
+    total_todo = tasks_as_dict['total'].split(',')[2]
     
-def consolidate_stories(story_as_dict, tasks_as_dict):
-    tasks_as_dict = consolidate_task_points(tasks_as_dict)
+    story_size_all  = story_as_dict['size 1']
+    story_size_all += ' ' + story_as_dict['size 2']
+    story_size_all += ' ' + story_as_dict['size 3']
+    story_size_all += ' ' + story_as_dict['size 4']
 
-    story_as_dict = story_as_dict
-
-    return story_as_dict, tasks_as_dict
-    
-
-def get_work_todo(story_as_dict, total_work_edited, total_work_todo):        
-    
-    story_size_all  = story_as_dict['size_1']
-    story_size_all += ' ' + story_as_dict['size_2']
-    story_size_all += ' ' + story_as_dict['size_3']
-    story_size_all += ' ' + story_as_dict['size_4']
-
-    story_work_todo = story_size_all.split()
-    story_work_edited = len(story_size_all.split())
+    story_work_todo = story_size_all.strip().split()
+    story_work_edited = len(story_work_todo)
 
     if story_work_edited == 0: ## no editing yet
-        return None, None
-    if story_work_edited > 1: ## real work done, not only estimate
-        total_work_edited = min(total_work_edited, story_work_edited)
+        return None
+    if sprint_day <= story_work_edited:
+        return None
 
-    for day in range(story_work_edited):
-        total_work_todo[day] += int(story_work_todo[day])
-    for day in range(story_work_edited, len(total_work_todo)):
-        total_work_todo[day] += int(story_work_todo[-1])
+    for day in range(story_work_edited, sprint_day+1):
+        story_work_todo.append(total_todo)
 
-    return total_work_edited, total_work_todo
+    story_as_dict['size 1'] = story_work_todo[0*days_per_period:1*days_per_period]
+    story_as_dict['size 2'] = story_work_todo[1*days_per_period:2*days_per_period]
+    story_as_dict['size 3'] = story_work_todo[2*days_per_period:3*days_per_period]
+    story_as_dict['size 4'] = story_work_todo[3*days_per_period:4*days_per_period]
+    
+    return story_as_dict
+
+
+def consolidate_stories(story_as_dict, tasks_as_dict, for_sprint_day, days_per_period):
+    tasks_as_dict = consolidate_task_points(tasks_as_dict)
+
+    story_as_dict = fill_work_todo(story_as_dict, tasks_as_dict,
+                                   for_sprint_day, days_per_period)
+
+    return story_as_dict, tasks_as_dict
+    
+
 
 
 def main():
@@ -217,6 +230,10 @@ def main():
                 .format(points))
 
 
+    if args.sprint_day < 1 or args.sprint_day > days: 
+        logger.error("Must provide legal sprint day for consolidation!")
+        return 7
+
     """ ------------------------------------------------------------------- """
 
     """ create a dictionary with story states as keys for indices """
@@ -232,11 +249,9 @@ def main():
     for story_file in args.from_text:
 
         if not os.access(story_file, os.W_OK):
-            logger.info("Story file is not writable: skipped '{}'.".format(story_file))
+            logger.info("Story file is not writable: Skipped '{}'.".format(story_file))
             continue
             
-        logger.info("Processing '{}'.".format(story_file))
-
         story_as_dict, tasks_as_dict = read_story_as_dict(story_file)
         if story_as_dict is None or tasks_as_dict is None:
             logger.error("Story file is illegal '{}'.".format(story_file))
@@ -247,10 +262,19 @@ def main():
         if story_as_dict['status'] in ["ready", "accepted", "committed"]: 
             story_as_dict, tasks_as_dict = reset_stories(story_as_dict, tasks_as_dict)
         elif story_as_dict['status'] in ["ANALYSING", "SPRINTING"]:
-            story_as_dict, tasks_as_dict = consolidate_stories(story_as_dict, tasks_as_dict)
+            story_as_dict, tasks_as_dict = consolidate_stories(story_as_dict, tasks_as_dict,
+                                                               args.sprint_day, int(days/periods))
+        else:
+            logger.info("Status does not fit: Skipped '{}'.".format(story_file))
+            continue
+
+        if story_as_dict is None or tasks_as_dict is None:
+            logger.info("Content does not fit. Skipped '{}'!".format(story_file))
+            continue 
+            
         
         if args.dry:
-            logger.error("Would consolidate '{}'.".format(story_file))
+            logger.info("Would consolidate '{}'.".format(story_file))
             continue
 
         if write_story_from_dict(story_file, story_as_dict, tasks_as_dict) is None:
