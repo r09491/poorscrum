@@ -146,71 +146,65 @@ def main():
     The last value entered for a slide is used for the values not provided
     until the end of the sprint. These are called the 'unedited'
     """
-    last_edited = days
-    total_work_left = (days)*[0]
+    total_work_edited = days
+    total_work_todo = (days)*[0]
     for num, slide in enumerate(prs.slides):
         """ Calc work left for a slide in the sprint from sizes """
-        slide_points_left = extract_work(slide, fields_map)
-        if slide_points_left is None:
+        slide_work_todo = extract_work(slide, fields_map)
+        if slide_work_todo is None:
             logger.error("Slide '{:d}': Wrong syntax in size fields!".format(num+1))
             return 8
 
-        if len(slide_points_left) == 0:
-            logger.info("Slide '{:d}': Skipped since not a story file!".format(num+1))
+        slide_work_edited =len(slide_work_todo)
+        if slide_work_edited == 0:
+            logger.info("Slide '{:d}': Skipped since no size!".format(num+1))
             continue
-
 
         """
         A length of '1' means there is only an estimate: No editing has taken place. Ignore!
         """
-        if len(slide_points_left)>1:
-            last_edited = min(len(slide_points_left), last_edited) 
-
-        """
-        A length of '0' means: No editing has taken place. Error!
-        """
-        if last_edited < 1:
-            logger.error("Slide '{:d}': No Size entry.Fix sizes!".format(num+1))
-            return 10
+        total_work_edited = 0 if slide_work_edited == 1 \
+                            else min(total_work_edited, slide_work_edited) 
+            
 
         """ Add entered values """
-        edited_range = range(len(slide_points_left))
+        edited_range = range(slide_work_edited)
         for index in edited_range:
-            total_work_left[index] += slide_points_left[index]
+            total_work_todo[index] += slide_work_todo[index]
         
         """ Add the last entered value """
-        unedited_range = range(len(slide_points_left), len(total_work_left))
+        unedited_range = range(slide_work_edited, len(total_work_todo))
         for index in unedited_range:
-            total_work_left[index] += slide_points_left[-1]
+            total_work_todo[index] += slide_work_todo[-1]
         
         logger.info("Slide '{:d}': Included in work to be done!".format(num+1))
         
     logger.info("Work left is consistently entered including sprint day {:d}."
-                .format(last_edited))
+                .format(total_work_edited))
 
     """ Output work to be done in period format """
     nperiods = periods+1
     for period in range(int(days / nperiods)):
-        period_estimate = total_work_left[(nperiods)*period:(nperiods)*(period+1)]
+        period_estimate = total_work_todo[(nperiods)*period:(nperiods)*(period+1)]
         logger.info("Work left estimate for period {:d}: {}".
                     format(period, str(period_estimate)))
 
-    if points > total_work_left[0]:
+    if points > total_work_todo[0]:
         logger.info("Devs offer more points than required ('{:d}' > '{:d}'). Sprint can work!"
-                    .format(points, total_work_left[0]))
+                    .format(points, total_work_todo[0]))
         logger.info("'{:d}' points are available for analysis and spikes."
-                    .format(points - total_work_left[0]))
+                    .format(points - total_work_todo[0]))
     else:
         logger.warn("Devs offers less points than required ('{:d}' < '{:d}'). Sprint cannot work!"
-                    .format(points, total_work_left[0]))
+                    .format(points, total_work_todo[0]))
         logger.warn("Stories are to be reduced by '{:d}' points."
-                    .format(total_work_left[0] - points))
+                    .format(total_work_todo[0] - points))
     
     if args.dry:
         logger.info("Dry run finished: ok.")
         return 0
 
-    save_name = burndown_as_image(last_edited, total_work_left)
+    save_name = burndown_as_image(total_work_edited, total_work_todo)
     logger.info("Saved the burddown chart to '{}'".format(save_name))
 
     add_burndown_to_pptx(prs, save_name)

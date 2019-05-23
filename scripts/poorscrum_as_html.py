@@ -46,7 +46,7 @@ def parse_arguments():
                         action="store_true", 
                         help="Do not save the presentation")
 
-    parser.add_argument('-s', '--sprint_file', default=SPRINT_FILE,
+    parser.add_argument('--sprint_file', default=SPRINT_FILE,
                         help='SCRUM sprint setup file')
 
     parser.add_argument("to_html_dir", nargs=1, 
@@ -106,24 +106,23 @@ def write_index_as_html_file(from_dict, template, index_file_name):
 
 def get_work_todo(story_as_dict, total_work_edited, total_work_todo):        
     
-    story_size_all  = story_as_dict['size_1']
-    story_size_all += ' ' + story_as_dict['size_2']
-    story_size_all += ' ' + story_as_dict['size_3']
-    story_size_all += ' ' + story_as_dict['size_4']
+    story_size_all  = story_as_dict['size_1'].strip()
+    story_size_all += ' ' + story_as_dict['size_2'].strip()
+    story_size_all += ' ' + story_as_dict['size_3'].strip()
+    story_size_all += ' ' + story_as_dict['size_4'].strip()
 
     story_work_todo = story_size_all.split()
-    story_work_edited = len(story_size_all.split())
-
+    story_work_edited = len(story_work_todo)
     if story_work_edited == 0: ## no editing yet
         return None, None
-    if story_work_edited > 1: ## real work done, not only estimate
-        total_work_edited = min(total_work_edited, story_work_edited)
 
+    total_work_edited = 0 if story_work_edited == 1 \
+                        else min(total_work_edited, story_work_edited)
+        
     for day in range(story_work_edited):
         total_work_todo[day] += int(story_work_todo[day])
     for day in range(story_work_edited, len(total_work_todo)):
         total_work_todo[day] += int(story_work_todo[-1])
-
     return total_work_edited, total_work_todo
 
 
@@ -357,6 +356,7 @@ def main():
 
             total_work_edited, total_work_todo = get_work_todo(
                 story_as_dict, total_work_edited, total_work_todo)
+
             if total_work_edited is None or total_work_todo is None: 
                 logger.error("Sizes are not entered '{}'.".format(story_html_file))
                 return 13
@@ -375,8 +375,7 @@ def main():
         else:
             logger.info("Status index html file writing succeeded '{}'."
                         .format(status_index_html_file))
-
-
+        
         copy2(burndown_as_image(total_work_edited, total_work_todo), args.to_html_dir[0])
 
         devs_index_html_file = "devs_index.html"

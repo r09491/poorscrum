@@ -32,7 +32,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         prog = os.path.basename(sys.argv[0]),
         description ="Consolidate the story files in config format",
-        epilog = "Ensure the root directory for 'stories' directory exists!")
+        epilog = """
+        Ensure the root directory for 'stories' directory exists!
+        
+        0 is the first day in the sprint (sprint planning)
+        """)
 
     parser.add_argument("--version", action="version", version=__version__)
 
@@ -40,7 +44,11 @@ def parse_arguments():
                         action="store_true", 
                         help="Do not save the consolidated stories")
 
-    parser.add_argument('--sprint_day', type=int, default=MAX_DAYS,
+    parser.add_argument("--force", required=False,
+                        action="store_true", 
+                        help="Override already entered sizes")
+
+    parser.add_argument('--sprint_day', type=int, default=MAX_DAYS-1,
                         help='The day in the sprint for consolidation')
 
     parser.add_argument('--sprint_file', default=SPRINT_FILE,
@@ -149,42 +157,48 @@ def reset_stories(story_as_dict, tasks_as_dict):
     return story_as_dict, tasks_as_dict
 
 
-def fill_work_todo(story_as_dict, tasks_as_dict, sprint_day, days_per_period):
+def fill_work_todo(story_as_dict, tasks_as_dict, sprint_day, days_per_period, force=False):
     """
-    Fills the work todo list until 'for_sprint_day' with the last edit value
+    Fills the work todo list until 'sprint_day' with the tail entry
+
+    0 is the the first day in in the sprint!
+
+    With 'force' entered sizes are ovverriden. Caution!
     """
 
     total_todo = tasks_as_dict['total'].split(',')[2]
     
-    story_size_all  = story_as_dict['size 1']
-    story_size_all += ' ' + story_as_dict['size 2']
-    story_size_all += ' ' + story_as_dict['size 3']
-    story_size_all += ' ' + story_as_dict['size 4']
+    story_size_all  = story_as_dict['size 1'].strip()
+    story_size_all += ' ' + story_as_dict['size 2'].strip()
+    story_size_all += ' ' + story_as_dict['size 3'].strip()
+    story_size_all += ' ' + story_as_dict['size 4'].strip()
 
     story_work_todo = story_size_all.strip().split()
     story_work_edited = len(story_work_todo)
 
-    if story_work_edited == 0: ## no editing yet
-        return None
-    if sprint_day <= story_work_edited:
+    ## if story_work_edited == 0: ## no editing yet
+    ##    return None
+    if (sprint_day < story_work_edited) and (not force):
         return None
 
+    story_work_edited = min(story_work_edited, sprint_day)
+    story_work_todo = story_work_todo[:story_work_edited]
     for day in range(story_work_edited, sprint_day+1):
         story_work_todo.append(total_todo)
 
-    story_as_dict['size 1'] = story_work_todo[0*days_per_period:1*days_per_period]
-    story_as_dict['size 2'] = story_work_todo[1*days_per_period:2*days_per_period]
-    story_as_dict['size 3'] = story_work_todo[2*days_per_period:3*days_per_period]
-    story_as_dict['size 4'] = story_work_todo[3*days_per_period:4*days_per_period]
+    story_as_dict['size 1'] = " ".join(story_work_todo[0*days_per_period:1*days_per_period])
+    story_as_dict['size 2'] = " ".join(story_work_todo[1*days_per_period:2*days_per_period])
+    story_as_dict['size 3'] = " ".join(story_work_todo[2*days_per_period:3*days_per_period])
+    story_as_dict['size 4'] = " ".join(story_work_todo[3*days_per_period:4*days_per_period])
     
     return story_as_dict
 
 
-def consolidate_stories(story_as_dict, tasks_as_dict, for_sprint_day, days_per_period):
+def consolidate_stories(story_as_dict, tasks_as_dict, for_sprint_day, days_per_period, force):
     tasks_as_dict = consolidate_task_points(tasks_as_dict)
 
     story_as_dict = fill_work_todo(story_as_dict, tasks_as_dict,
-                                   for_sprint_day, days_per_period)
+                                   for_sprint_day, days_per_period, force)
 
     return story_as_dict, tasks_as_dict
     
@@ -230,7 +244,7 @@ def main():
                 .format(points))
 
 
-    if args.sprint_day < 1 or args.sprint_day > days: 
+    if args.sprint_day < 0 or args.sprint_day >= days: 
         logger.error("Must provide legal sprint day for consolidation!")
         return 7
 
@@ -249,7 +263,7 @@ def main():
     for story_file in args.from_text:
 
         if not os.access(story_file, os.W_OK):
-            logger.info("Story file is not writable: Skipped '{}'.".format(story_file))
+            logger.warn("Story file is not writable: Skipped '{}'.".format(story_file))
             continue
             
         story_as_dict, tasks_as_dict = read_story_as_dict(story_file)
@@ -259,11 +273,15 @@ def main():
 
         """ Update the story estimate dependend on identified tasks """
 
-        if story_as_dict['status'] in ["ready", "accepted", "committed"]: 
+        if story_as_dict['status'] in ["ready", "accepted", "committed"]:
+            logger.info("Reseting '{}'.".format(story_file))            
             story_as_dict, tasks_as_dict = reset_stories(story_as_dict, tasks_as_dict)
+
         elif story_as_dict['status'] in ["ANALYSING", "SPRINTING"]:
+            logger.info("Consolidating '{}'.".format(story_file))
             story_as_dict, tasks_as_dict = consolidate_stories(story_as_dict, tasks_as_dict,
-                                                               args.sprint_day, int(days/periods))
+                                                               args.sprint_day, int(days/periods),
+                                                               args.force)
         else:
             logger.info("Status does not fit: Skipped '{}'.".format(story_file))
             continue
