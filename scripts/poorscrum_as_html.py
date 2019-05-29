@@ -118,11 +118,12 @@ def get_work_todo(story_as_dict, total_work_edited, total_work_todo):
 
     total_work_edited = 0 if story_work_edited == 1 \
                         else min(total_work_edited, story_work_edited)
-        
+
     for day in range(story_work_edited):
         total_work_todo[day] += int(story_work_todo[day])
     for day in range(story_work_edited, len(total_work_todo)):
         total_work_todo[day] += int(story_work_todo[-1])
+
     return total_work_edited, total_work_todo
 
 
@@ -343,8 +344,8 @@ def main():
         may be allocated to several developers.
         """
 
-        if story_as_dict['devs'] != "" and \
-               story_as_dict['status'] in  ["ANALYSING", "commited", "SPRINTING"]:
+        ## if story_as_dict['devs'] != "" and \
+        if story_as_dict['status'] in  ["committed", "SPRINTING", "ANALYSING"]:
 
             for dev in devs_as_list:
                 if not (dev in devs_as_dict):
@@ -352,7 +353,9 @@ def main():
                 devs_as_dict[dev].append(
                     [story_as_dict['id'], story_html_path])
 
-            """ Input for burndown """
+        """ Input for burndown. ANALYSING work is not considered! """
+
+        if story_as_dict['status'] in  ["committed", "SPRINTING"]:
 
             total_work_edited, total_work_todo = get_work_todo(
                 story_as_dict, total_work_edited, total_work_todo)
