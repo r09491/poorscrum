@@ -67,11 +67,15 @@ def read_story_as_dict(from_story_file):
     
     story = configparser.ConfigParser()
     story.read(from_story_file)
+
+    story_dict = dict((s, story.get(s, "text")) 
+                      for s in story.sections() if s != "tasks")
+
+    tasks_dict = dict((o, story.get("tasks", o))
+                      for o in story.options("tasks"))
     
-    return dict((s, story.get(s, "text")) 
-                for s in story.sections() if s != "tasks"), \
-                dict((o, story.get("tasks", o))
-                     for o in story.options("tasks"))
+    return story_dict, tasks_dict
+
 
 def write_story_from_dict(to_story_file, story_as_dict, tasks_as_dict):
     """ 
@@ -165,9 +169,8 @@ def fill_work_todo(story_as_dict, tasks_as_dict, sprint_day, days_per_period, fo
 
     With 'force' entered sizes are ovverriden. Caution!
     """
-
     total_todo = tasks_as_dict['total'].split(',')[2]
-    
+
     story_size_all  = story_as_dict['size 1'].strip()
     story_size_all += ' ' + story_as_dict['size 2'].strip()
     story_size_all += ' ' + story_as_dict['size 3'].strip()
@@ -175,7 +178,6 @@ def fill_work_todo(story_as_dict, tasks_as_dict, sprint_day, days_per_period, fo
 
     story_work_todo = story_size_all.strip().split()
     story_work_edited = len(story_work_todo)
-
     ## if story_work_edited == 0: ## no editing yet
     ##    return None
     if (sprint_day < story_work_edited) and (not force):
@@ -273,11 +275,11 @@ def main():
 
         """ Update the story estimate dependend on identified tasks """
 
-        if story_as_dict['status'] in ["ready", "accepted", "committed"]:
+        if story_as_dict['status'] in ["ready", "accepted"]:
             logger.info("Reseting '{}'.".format(story_file))            
             story_as_dict, tasks_as_dict = reset_stories(story_as_dict, tasks_as_dict)
 
-        elif story_as_dict['status'] in ["ANALYSING", "SPRINTING"]:
+        elif story_as_dict['status'] in ["ANALYSING", "SPRINTING", "committed"]:
             logger.info("Consolidating '{}'.".format(story_file))
             story_as_dict, tasks_as_dict = consolidate_stories(story_as_dict, tasks_as_dict,
                                                                args.sprint_day, int(days/periods),

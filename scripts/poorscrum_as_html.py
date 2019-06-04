@@ -364,6 +364,10 @@ def main():
                 logger.error("Sizes are not entered '{}'.".format(story_html_file))
                 return 13
 
+            if total_work_edited == 0:
+                logger.error("Work to be done not entered '{}'. Consolidate!".format(story_html_file))
+                return 14
+
     """ ------------------------------------------------------------------- """
 
     """ Create and write the index files """
@@ -378,7 +382,7 @@ def main():
         else:
             logger.info("Status index html file writing succeeded '{}'."
                         .format(status_index_html_file))
-        
+
         copy2(burndown_as_image(total_work_edited, total_work_todo), args.to_html_dir[0])
 
         devs_index_html_file = "devs_index.html"
