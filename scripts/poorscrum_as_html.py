@@ -364,9 +364,9 @@ def main():
                 logger.error("Sizes are not entered '{}'.".format(story_html_file))
                 return 13
 
-            if total_work_edited == 0:
-                logger.error("Work to be done not entered '{}'. Consolidate!".format(story_html_file))
-                return 14
+            ## if total_work_edited == 0:
+            ##    logger.error("Work to be done not entered '{}'. Consolidate!".format(story_html_file))
+            ##    return 14
 
     """ ------------------------------------------------------------------- """
 

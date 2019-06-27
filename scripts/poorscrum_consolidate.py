@@ -135,7 +135,11 @@ def consolidate_task_points(tasks_as_dict):
 
     total_plan, total_todo, total_done = 0, 0, 0
     for estimate in tasks:
-        key, (what, plan, todo, done, dev) = estimate
+        try:
+            key, (what, plan, todo, done, dev) = estimate
+        except:
+            """ Snntax error"""
+            return None
         plan, todo, done = int(plan), int(todo), int(done)
         done = plan - todo if plan >= todo else plan
         ## Regular story points for normal rows
@@ -178,9 +182,11 @@ def fill_work_todo(story_as_dict, tasks_as_dict, sprint_day, days_per_period, fo
 
     story_work_todo = story_size_all.strip().split()
     story_work_edited = len(story_work_todo)
+
     ## if story_work_edited == 0: ## no editing yet
     ##    return None
     if (sprint_day < story_work_edited) and (not force):
+        """ Do not override manual entries """
         return None
 
     story_work_edited = min(story_work_edited, sprint_day)
